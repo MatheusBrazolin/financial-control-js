@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Controle Financeiro</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="header">
+    <h1>💰 Controle Financeiro</h1>
+    <p>Organize suas finanças de forma simples e inteligente</p>
+  </header>
+
+  <main class="container">
+
+    <!-- RESUMO FINANCEIRO -->
+    <section class="summary">
+      <div class="card income">
+        <h3>Entradas</h3>
+        <p class="value">R$ 0,00</p>
+      </div>
+
+      <div class="card expense">
+        <h3>Saídas</h3>
+        <p class="value">R$ 0,00</p>
+      </div>
+
+      <div class="card total">
+        <h3>Saldo Total</h3>
+        <p class="value">R$ 0,00</p>
+      </div>
+    </section>
+
+    <!-- FORMULÁRIO -->
+    <section class="form-section">
+      <h2>Nova Transação</h2>
+
+      <form class="transaction-form">
+        <input type="text" placeholder="Descrição" />
+
+        <input type="number" placeholder="Valor" />
+
+        <select>
+          <option value="">Categoria</option>
+          <option>Alimentação</option>
+          <option>Transporte</option>
+          <option>Moradia</option>
+          <option>Lazer</option>
+          <option>Outros</option>
+        </select>
+
+        <div class="buttons">
+          <button type="button" class="btn income-btn">Entrada</button>
+          <button type="button" class="btn expense-btn">Saída</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section class="history">
+      <h2>Histórico de Transações</h2>
+
+      <ul class="transaction-list">
+        <li class="income-item">
+          <span>Salário</span>
+          <span>R$ 2.000,00</span>
+        </li>
+
+        <li class="expense-item">
+          <span>Aluguel</span>
+          <span>- R$ 800,00</span>
+        </li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>Projeto desenvolvido para portfólio • JavaScript • HTML • CSS</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
