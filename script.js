@@ -13,7 +13,7 @@ const exportCsvBtn = document.getElementById("export-csv");
 
 let transacoes = JSON.parse(localStorage.getItem("transacoes") || "[]");
 
-// --- EVENTOS ---
+//EVENTOS 
 botaoEntrada.addEventListener("click", () => adicionarTransacao("entrada"));
 botaoSaida.addEventListener("click", () => adicionarTransacao("saida"));
 filterToggle.addEventListener("click", () => filterMenu.classList.toggle("hidden"));
@@ -28,7 +28,7 @@ filterButtons.forEach(btn => {
   });
 });
 
-// --- FORMATAR MOEDA ---
+// FORMATAR MOEDA
 const valorInput = document.getElementById("valor-input");
 valorInput.addEventListener("input", (e) => {
   let val = e.target.value.replace(/\D/g,'');
@@ -36,7 +36,7 @@ valorInput.addEventListener("input", (e) => {
   e.target.value = val ? `R$ ${val}` : '';
 });
 
-// --- FUNÇÕES ---
+// FUNÇÕES 
 function adicionarTransacao(tipo){
   const nova = dadosFormulario(tipo);
   if(!nova) return;
@@ -51,7 +51,7 @@ function dadosFormulario(tipo){
   const valInput = formulario.querySelector('#valor-input').value.replace(/[R$\s]/g,'').replace(',', '.');
   const cat = formulario.querySelector('select').value;
 
-  if(!desc || !valInput || !cat) return alert("Preencha todos os campos");
+  if(!valInput || !cat) return alert("Preencha todos os campos");
 
   const transacao = {
     descricao: desc,
@@ -106,7 +106,7 @@ function salvarLocal(){
   localStorage.setItem("transacoes", JSON.stringify(transacoes));
 }
 
-// --- EXPORT CSV ---
+// EXPORT CSV 
 function exportarCSV(){
   if(transacoes.length===0) return alert("Nenhuma transação para exportar");
   const cabecalho = ["Data","Categoria","Descrição","Tipo","Valor"];
@@ -122,10 +122,10 @@ function exportarCSV(){
   URL.revokeObjectURL(url);
 }
 
-// --- TEMA CLARO/ESCUR0 ---
+// TEMA CLARO/ESCUR0 
 function toggleTheme(){
   document.body.classList.toggle("dark");
 }
 
-// --- CARREGAR HISTÓRICO AO ABRIR ---
+// CARREGAR HISTÓRICO AO ABRIR 
 renderizarTransacoes();
