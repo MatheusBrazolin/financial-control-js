@@ -8,8 +8,15 @@
 </head>
 <body>
 
+  <!-- MENU SUPERIOR -->
   <header class="header">
-    <h1>💰 Controle Financeiro</h1>
+    <div class="menu-top">
+      <h1>💰 Controle Financeiro</h1>
+      <div class="menu-actions">
+        <button id="theme-toggle">🌙</button>
+        <button id="export-csv">📄 CSV</button>
+      </div>
+    </div>
     <p>Organize suas finanças de forma simples e inteligente</p>
   </header>
 
@@ -36,13 +43,11 @@
     <!-- FORMULÁRIO -->
     <section class="form-section">
       <h2>Nova Transação</h2>
-
+      <br>
       <form class="transaction-form">
-        <input type="text" placeholder="Descrição" />
-
-        <input type="number" placeholder="Valor" />
-
-        <select>
+        <input type="text" placeholder="Descrição" required />
+        <input type="text" placeholder="Valor" required id="valor-input" />
+        <select required>
           <option value="">Categoria</option>
           <option>Alimentação</option>
           <option>Transporte</option>
@@ -61,18 +66,15 @@
     <!-- HISTÓRICO -->
     <section class="history">
       <h2>Histórico de Transações</h2>
-
-      <ul class="transaction-list">
-        <li class="income-item">
-          <span>Salário</span>
-          <span>R$ 2.000,00</span>
-        </li>
-
-        <li class="expense-item">
-          <span>Aluguel</span>
-          <span>- R$ 800,00</span>
-        </li>
-      </ul>
+      <div class="history-actions">
+        <button id="filter-toggle">☰</button>
+        <div class="filter-menu hidden">
+          <button class="filter-btn" data-type="all">Todos</button>
+          <button class="filter-btn" data-type="entrada">Entradas</button>
+          <button class="filter-btn" data-type="saida">Saídas</button>
+        </div>
+      </div>
+      <ul class="transaction-list"></ul>
     </section>
 
   </main>
