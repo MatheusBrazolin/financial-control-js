@@ -1,73 +1,127 @@
-let botaoEntrada = document.querySelector(".btn.income-btn");
+const botaoEntrada = document.querySelector(".btn.income-btn");
+const botaoSaida = document.querySelector(".btn.expense-btn");
+const formulario = document.querySelector(".transaction-form");
+const lista = document.querySelector(".transaction-list");
+const saldoDisplay = document.querySelector(".summary");
+
 let transacoes = [];
 
-// Atualiza a tela
 renderizarTransacoes();
 
 botaoEntrada.addEventListener("click", () => {
-    let novaTransacao = dadosFormulario();
-
-    if (!novaTransacao) {
-        return;
-    }
-
-    // Adiciona a nova transação ao array
-    transacoes.push(novaTransacao);
-
-    // Atualiza a tela
-    renderizarTransacoes();
-    console.log(transacoes);
-    
+    adicionarTransacao("entrada");
 });
 
+botaoSaida.addEventListener("click", () => {
+    adicionarTransacao("saida");
+});
 
-function dadosFormulario() {
-    let formulario = document.querySelector(".transaction-form");
+function adicionarTransacao(tipo) {
+    const novaTransacao = dadosFormulario(tipo);
+    if (!novaTransacao) return;
 
-    let inputDescricao = formulario.querySelector('input[type="text"]');
-    let inputValor = formulario.querySelector('input[type="number"]');
-    let selectorCategoria = formulario.querySelector('select');
+    transacoes.push(novaTransacao);
 
-    // Validação do valor
+    renderizarTransacoes();
+
+    console.log(transacoes);
+}
+
+function dadosFormulario(tipo) {
+    const inputDescricao = formulario.querySelector('input[type="text"]');
+    const inputValor = formulario.querySelector('input[type="number"]');
+    const selectorCategoria = formulario.querySelector('select');
     if (inputValor.value === "" || isNaN(inputValor.value)) {
         alert("Por favor, insira um valor numérico válido.");
         return;
     }
 
-    // Validação da categoria
+
     if (selectorCategoria.value === "") {
         alert("Por favor, selecione uma categoria.");
         return;
     }
 
-    // Objeto da transação
-    let novaTransacao = {
+    const transacao = {
         descricao: inputDescricao.value,
         valor: parseFloat(inputValor.value),
-        categoria: selectorCategoria.value
+        categoria: selectorCategoria.value,
+        tipo: tipo // "entrada" ou "saida"
     };
 
-    // Reseta o formulário 
     formulario.reset();
-
-    return novaTransacao;
+    return transacao;
 }
 
 
 function renderizarTransacoes() {
-    let lista = document.querySelector(".transaction-list");
     lista.innerHTML = "";
 
     transacoes.forEach((transacao) => {
-        let li = document.createElement("li");
-        li.classList.add("income-item");
+        const li = document.createElement("li");
+
+        li.classList.add(
+            transacao.tipo === "entrada" ? "income-item" : "expense-item"
+        );
+
 
         li.innerHTML = `
-      <span>${transacao.categoria}</span>
-      <span>${transacao.descricao}</span>
-      <span>R$ ${transacao.valor.toFixed(2)}</span>
-    `;
-
+            <span>${transacao.categoria}</span>
+            <span>${transacao.descricao}</span>
+            <span>R$ ${transacao.valor.toFixed(2)}</span>
+        `;
         lista.appendChild(li);
     });
+
+    //Atualizar display saldo
+    calcularEntrada();
+    atualizarEntradaDisplay();
+
+    //Attualizar display saída
+    calcularSaida();
+    atualizarSaidaDisplay();
+
+    //Atualizar display saldo total
+    saldoTotal();
+    atualizarSaldoTotalDisplay();
 }
+
+function calcularEntrada() {
+    let saldo = 0;
+    transacoes.forEach((transacao) => {
+        if (transacao.tipo === "entrada") {
+            saldo += transacao.valor;
+        }
+    });
+    return saldo;
+}
+
+function atualizarEntradaDisplay() {
+    const entrada = calcularEntrada();
+    saldoDisplay.querySelector(".income .value").textContent = `R$ ${entrada.toFixed(2)}`;
+}
+
+function calcularSaida() {
+    let saida = 0;
+    transacoes.forEach((transacao) => {
+        if (transacao.tipo === "saida") {
+            saida += transacao.valor;
+        }
+    });
+    return saida;
+}
+
+function atualizarSaidaDisplay() {
+    const saida = calcularSaida();
+    saldoDisplay.querySelector(".expense .value").textContent = `R$ ${saida.toFixed(2)}`;
+}
+
+function saldoTotal() {
+    return calcularEntrada() - calcularSaida();
+}
+
+function atualizarSaldoTotalDisplay() {
+    const total = saldoTotal();
+    saldoDisplay.querySelector(".total .value").textContent = `R$ ${total.toFixed(2)}`;
+}
+
