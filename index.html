@@ -17,74 +17,194 @@
       </div>
 
       <nav class="sidebar-nav">
-        <span class="nav-link active">📊 Dashboard</span>
+        <button class="nav-link active" data-tab="dashboard">📊 Dashboard</button>
+        <button class="nav-link" data-tab="transacoes">📝 Transações</button>
+        <button class="nav-link" data-tab="orcamento">🎯 Orçamentos</button>
+        <button class="nav-link" data-tab="relatorio">📈 Relatórios</button>
       </nav>
 
       <div class="sidebar-footer">
-        <!-- Dark mode: Use Ctrl+D para ativar -->
-        <button id="theme-toggle" class="theme-btn" title="Atalho: Ctrl+D" style="opacity: 0.3; font-size: 0.8rem;">◐</button>
+        <button id="theme-toggle" class="theme-btn" title="Ctrl+D" style="opacity: 0.3; font-size: 0.8rem;">◐</button>
       </div>
     </aside>
 
     <!-- MAIN -->
     <main class="main-content">
       <header class="top-bar">
-        <h2>Dashboard</h2>
+        <h2 id="page-title">Dashboard</h2>
         <button id="export-csv" class="btn-icon">📥</button>
       </header>
 
-      <!-- QUICK STATS -->
-      <section class="dashboard-grid">
-        <div class="stat-card income">
-          <div class="stat-header">
-            <span class="stat-label">Entradas</span>
-            <span class="stat-icon">↑</span>
-          </div>
-          <div class="stat-value" data-income>R$ 0,00</div>
-          <div class="stat-footer">Este mês</div>
-        </div>
-
-        <div class="stat-card expense">
-          <div class="stat-header">
-            <span class="stat-label">Saídas</span>
-            <span class="stat-icon">↓</span>
-          </div>
-          <div class="stat-value" data-expense>R$ 0,00</div>
-          <div class="stat-footer">Este mês</div>
-        </div>
-
-        <div class="stat-card balance">
-          <div class="stat-header">
-            <span class="stat-label">Saldo</span>
-            <span class="stat-icon">⚖️</span>
-          </div>
-          <div class="stat-value" data-balance>R$ 0,00</div>
-          <div class="stat-footer">Disponível</div>
-        </div>
-      </section>
-
-      <!-- MAIN GRID -->
-      <div class="content-grid">
-        <!-- LEFT: FORM -->
-        <section class="card form-card">
-          <h3>Nova Transação</h3>
-          <form class="transaction-form" id="transaction-form">
-            <div class="form-group">
-              <label>Descrição</label>
-              <input type="text" placeholder="O que você gastou ou recebeu?" class="form-input" data-field="descricao" required />
-              <span class="form-error" data-error="descricao"></span>
+      <!-- TAB: DASHBOARD -->
+      <div class="tab-content active" data-tab="dashboard">
+        <!-- INSIGHTS -->
+        <section class="dashboard-grid">
+          <div class="stat-card income">
+            <div class="stat-header">
+              <span class="stat-label">Entradas</span>
+              <span class="stat-icon">↑</span>
             </div>
+            <div class="stat-value" data-income>R$ 0,00</div>
+            <div class="stat-footer" id="insight-income">Este mês</div>
+          </div>
 
-            <div class="form-row">
+          <div class="stat-card expense">
+            <div class="stat-header">
+              <span class="stat-label">Saídas</span>
+              <span class="stat-icon">↓</span>
+            </div>
+            <div class="stat-value" data-expense>R$ 0,00</div>
+            <div class="stat-footer" id="insight-expense">Este mês</div>
+          </div>
+
+          <div class="stat-card balance">
+            <div class="stat-header">
+              <span class="stat-label">Saldo</span>
+              <span class="stat-icon">⚖️</span>
+            </div>
+            <div class="stat-value" data-balance>R$ 0,00</div>
+            <div class="stat-footer">Disponível</div>
+          </div>
+        </section>
+
+        <!-- INSIGHTS ROW -->
+        <div class="insights-grid">
+          <div class="insight-card">
+            <div class="insight-label">Maior Gasto</div>
+            <div class="insight-value" id="maior-gasto">-</div>
+            <div class="insight-detail" id="maior-gasto-cat">-</div>
+          </div>
+
+          <div class="insight-card">
+            <div class="insight-label">Categoria Top</div>
+            <div class="insight-value" id="categoria-top">-</div>
+            <div class="insight-detail" id="categoria-top-valor">-</div>
+          </div>
+
+          <div class="insight-card">
+            <div class="insight-label">Média Diária</div>
+            <div class="insight-value" id="media-diaria">-</div>
+            <div class="insight-detail" id="dias-restantes">-</div>
+          </div>
+
+          <div class="insight-card">
+            <div class="insight-label">Vs Mês Anterior</div>
+            <div class="insight-value" id="comparativo-anterior">-</div>
+            <div class="insight-detail" id="comparativo-percent">-</div>
+          </div>
+        </div>
+
+        <!-- MAIN GRID -->
+        <div class="content-grid">
+          <!-- LEFT: FORM -->
+          <section class="card form-card">
+            <h3>Nova Transação</h3>
+            <form class="transaction-form" id="transaction-form">
               <div class="form-group">
-                <label>Valor</label>
-                <input type="text" placeholder="0,00" class="form-input" data-field="valor" id="valor-input" required />
-                <span class="form-error" data-error="valor"></span>
+                <label>Descrição</label>
+                <input type="text" placeholder="O que você gastou ou recebeu?" class="form-input" data-field="descricao" required />
+                <span class="form-error" data-error="descricao"></span>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Valor</label>
+                  <input type="text" placeholder="0,00" class="form-input" data-field="valor" id="valor-input" required />
+                  <span class="form-error" data-error="valor"></span>
+                </div>
+
+                <div class="form-group">
+                  <label>Categoria</label>
+                  <select class="form-input" data-field="categoria" required>
+                    <option value="">Selecionar</option>
+                    <option>Alimentação</option>
+                    <option>Transporte</option>
+                    <option>Moradia</option>
+                    <option>Saúde</option>
+                    <option>Lazer</option>
+                    <option>Educação</option>
+                    <option>Outros</option>
+                  </select>
+                  <span class="form-error" data-error="categoria"></span>
+                </div>
               </div>
 
               <div class="form-group">
+                <label style="display: flex; gap: 8px; font-weight: normal;">
+                  <input type="checkbox" id="recorrente-check" />
+                  <span>Transação recorrente (mensal)</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn btn-success" data-type="entrada">+ Entrada</button>
+                <button type="button" class="btn btn-danger" data-type="saida">- Saída</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- RIGHT: CHART -->
+          <section class="card chart-card">
+            <h3>Gastos por Categoria</h3>
+            <div class="chart-container">
+              <canvas id="category-chart" width="280" height="280"></canvas>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- TAB: TRANSAÇÕES -->
+      <div class="tab-content" data-tab="transacoes">
+        <section class="card">
+          <div class="section-header">
+            <h3>Transações</h3>
+            <div class="section-controls">
+              <input type="month" id="month-filter" class="filter-input" />
+              <input type="text" id="search-input" placeholder="Buscar..." class="filter-input search" />
+              <button id="filter-toggle" class="btn-filter">⚙️</button>
+              <div class="filter-dropdown">
+                <button class="filter-btn" data-type="all">Todas</button>
+                <button class="filter-btn" data-type="entrada">Entradas</button>
+                <button class="filter-btn" data-type="saida">Saídas</button>
+                <hr />
+                <button class="filter-btn" data-special="recorrentes">Recorrentes</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="empty-state" class="empty-state">
+            <p>📭</p>
+            <p>Nenhuma transação registrada</p>
+          </div>
+
+          <div class="transactions-table">
+            <div class="table-header">
+              <div class="col-date">Data</div>
+              <div class="col-desc">Descrição</div>
+              <div class="col-category">Categoria</div>
+              <div class="col-value">Valor</div>
+              <div class="col-actions">Ações</div>
+            </div>
+            <ul class="transaction-list"></ul>
+          </div>
+        </section>
+      </div>
+
+      <!-- TAB: ORÇAMENTOS -->
+      <div class="tab-content" data-tab="orcamento">
+        <section class="card">
+          <div class="section-header">
+            <h3>Orçamentos por Categoria</h3>
+          </div>
+
+          <div class="orcamentos-grid" id="orcamentos-grid"></div>
+
+          <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+            <h4 style="margin-bottom: 16px;">Adicionar Orçamento</h4>
+            <div class="form-row">
+              <div class="form-group">
                 <label>Categoria</label>
-                <select class="form-input" data-field="categoria" required>
+                <select id="orcamento-categoria" class="form-input">
                   <option value="">Selecionar</option>
                   <option>Alimentação</option>
                   <option>Transporte</option>
@@ -94,58 +214,50 @@
                   <option>Educação</option>
                   <option>Outros</option>
                 </select>
-                <span class="form-error" data-error="categoria"></span>
+              </div>
+              <div class="form-group">
+                <label>Limite (R$)</label>
+                <input type="text" id="orcamento-valor" class="form-input" placeholder="1000" />
+              </div>
+              <div class="form-group" style="display: flex; align-items: flex-end;">
+                <button id="add-orcamento" class="btn btn-success">Adicionar</button>
               </div>
             </div>
-
-            <div class="form-actions">
-              <button type="button" class="btn btn-success" data-type="entrada">+ Entrada</button>
-              <button type="button" class="btn btn-danger" data-type="saida">- Saída</button>
-            </div>
-          </form>
-        </section>
-
-        <!-- RIGHT: CHART -->
-        <section class="card chart-card">
-          <h3>Gastos por Categoria</h3>
-          <div class="chart-container">
-            <canvas id="category-chart" width="280" height="280"></canvas>
           </div>
         </section>
       </div>
 
-      <!-- TRANSACTIONS -->
-      <section class="card">
-        <div class="section-header">
-          <h3>Transações</h3>
-          <div class="section-controls">
-            <input type="month" id="month-filter" class="filter-input" />
-            <input type="text" id="search-input" placeholder="Buscar..." class="filter-input search" />
-            <button id="filter-toggle" class="btn-filter">⚙️</button>
-            <div class="filter-dropdown">
-              <button class="filter-btn" data-type="all">Todas</button>
-              <button class="filter-btn" data-type="entrada">Entradas</button>
-              <button class="filter-btn" data-type="saida">Saídas</button>
+      <!-- TAB: RELATÓRIOS -->
+      <div class="tab-content" data-tab="relatorio">
+        <section class="card">
+          <div class="section-header">
+            <h3>Comparativo de Períodos</h3>
+          </div>
+
+          <div class="form-row" style="margin-bottom: 24px;">
+            <div class="form-group">
+              <label>Mês 1</label>
+              <input type="month" id="periodo-1" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label>Mês 2</label>
+              <input type="month" id="periodo-2" class="form-input" />
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button id="comparar-btn" class="btn btn-success">Comparar</button>
             </div>
           </div>
-        </div>
 
-        <div id="empty-state" class="empty-state">
-          <p>📭</p>
-          <p>Nenhuma transação registrada</p>
-        </div>
+          <div id="comparativo-resultado" class="comparativo-grid" style="display: none;"></div>
+        </section>
 
-        <div class="transactions-table">
-          <div class="table-header">
-            <div class="col-date">Data</div>
-            <div class="col-desc">Descrição</div>
-            <div class="col-category">Categoria</div>
-            <div class="col-value">Valor</div>
-            <div class="col-actions">Ações</div>
+        <section class="card" style="margin-top: 24px;">
+          <div class="section-header">
+            <h3>Resumo Anual</h3>
           </div>
-          <ul class="transaction-list"></ul>
-        </div>
-      </section>
+          <div id="resumo-anual" class="resumo-anual"></div>
+        </section>
+      </div>
     </main>
   </div>
 
