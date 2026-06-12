@@ -34,16 +34,36 @@ const config = {
 };
 
 // ====== TABS ======
+function abrirTab(tabName) {
+  // Remover active de todos os botões e conteúdos
+  document.querySelectorAll(".nav-link").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+
+  // Adicionar active ao botão e conteúdo correto
+  document.querySelector(`[data-tab="${tabName}"]`).classList.add("active");
+  const tabContent = document.querySelector(`.tab-content[data-tab="${tabName}"]`);
+  if (tabContent) {
+    tabContent.classList.add("active");
+  }
+
+  // Atualizar título
+  const btnText = document.querySelector(`[data-tab="${tabName}"]`).textContent;
+  pageTitle.textContent = btnText.substring(2).trim();
+
+  // Renderizar conteúdo específico
+  setTimeout(() => {
+    if (tabName === "orcamento") renderizarOrcamentos();
+    if (tabName === "relatorio") renderizarResumoAnual();
+    if (tabName === "transacoes") renderizar();
+    if (tabName === "dashboard") renderizar();
+  }, 50);
+}
+
 document.querySelectorAll(".nav-link").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".nav-link").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
-    btn.classList.add("active");
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
     const tab = btn.dataset.tab;
-    document.querySelector(`[data-tab="${tab}"]`).classList.add("active");
-    pageTitle.textContent = btn.textContent.substring(2).trim();
-    if (tab === "orcamento") renderizarOrcamentos();
-    if (tab === "relatorio") renderizarResumoAnual();
+    abrirTab(tab);
   });
 });
 
@@ -469,4 +489,6 @@ if (localStorage.getItem("tema") === "dark") {
 }
 
 monthFilter.valueAsDate = new Date();
+// Inicializar primeiro tab
+abrirTab("dashboard");
 renderizar();
