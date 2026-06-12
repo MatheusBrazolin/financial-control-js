@@ -8,92 +8,148 @@
 </head>
 <body>
 
-  <header class="header">
-    <div class="menu-top">
-      <h1>💰 Controle Financeiro</h1>
-      <div class="menu-actions">
-        <button id="theme-toggle" aria-label="Alternar tema">🌙</button>
-        <button id="export-csv" aria-label="Exportar CSV">📥</button>
+  <div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">💰</div>
+        <h1>Finance</h1>
       </div>
-    </div>
-    <p>Gerencie suas finanças com inteligência</p>
-  </header>
 
-  <main class="container">
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-link active">Dashboard</a>
+        <a href="#" class="nav-link">Transações</a>
+        <a href="#" class="nav-link">Relatórios</a>
+        <a href="#" class="nav-link">Configurações</a>
+      </nav>
 
-    <section class="summary">
-      <div class="card income">
-        <h3>Entradas</h3>
-        <p class="value" data-income>R$ 0,00</p>
+      <div class="sidebar-footer">
+        <button id="theme-toggle" class="theme-btn">🌙</button>
       </div>
-      <div class="card expense">
-        <h3>Saídas</h3>
-        <p class="value" data-expense>R$ 0,00</p>
-      </div>
-      <div class="card total">
-        <h3>Saldo</h3>
-        <p class="value" data-balance>R$ 0,00</p>
-      </div>
-    </section>
+    </aside>
 
-    <section class="form-section">
-      <h2>Adicionar Transação</h2>
-      <form class="transaction-form" id="transaction-form">
-        <input type="text" placeholder="Descrição" class="form-input" data-field="descricao" required />
-        <span class="error-msg" data-error="descricao"></span>
+    <!-- MAIN -->
+    <main class="main-content">
+      <header class="top-bar">
+        <h2>Dashboard</h2>
+        <button id="export-csv" class="btn-icon">📥</button>
+      </header>
 
-        <input type="text" placeholder="Valor" class="form-input" data-field="valor" id="valor-input" required />
-        <span class="error-msg" data-error="valor"></span>
-
-        <select class="form-input" data-field="categoria" required>
-          <option value="">Categoria</option>
-          <option>Alimentação</option>
-          <option>Transporte</option>
-          <option>Moradia</option>
-          <option>Saúde</option>
-          <option>Lazer</option>
-          <option>Educação</option>
-          <option>Outros</option>
-        </select>
-        <span class="error-msg" data-error="categoria"></span>
-
-        <div class="button-group">
-          <button type="button" class="btn income-btn" data-type="entrada">+ Entrada</button>
-          <button type="button" class="btn expense-btn" data-type="saida">- Saída</button>
+      <!-- QUICK STATS -->
+      <section class="dashboard-grid">
+        <div class="stat-card income">
+          <div class="stat-header">
+            <span class="stat-label">Entradas</span>
+            <span class="stat-icon">↑</span>
+          </div>
+          <div class="stat-value" data-income>R$ 0,00</div>
+          <div class="stat-footer">Este mês</div>
         </div>
-      </form>
-    </section>
 
-    <section class="chart-section">
-      <h3>Gastos por Categoria</h3>
-      <canvas id="category-chart" width="400" height="250"></canvas>
-    </section>
+        <div class="stat-card expense">
+          <div class="stat-header">
+            <span class="stat-label">Saídas</span>
+            <span class="stat-icon">↓</span>
+          </div>
+          <div class="stat-value" data-expense>R$ 0,00</div>
+          <div class="stat-footer">Este mês</div>
+        </div>
 
-    <section class="history">
-      <div class="history-header">
-        <h2>Transações</h2>
-        <div class="history-controls">
-          <input type="month" id="month-filter" class="month-input" aria-label="Filtrar por mês" />
-          <input type="text" id="search-input" placeholder="🔍 Buscar descrição..." class="search-input" />
-          <button id="filter-toggle" aria-label="Opções de filtro">⚙️</button>
-          <div class="filter-menu hidden">
-            <button class="filter-btn" data-type="all">Todas</button>
-            <button class="filter-btn" data-type="entrada">Entradas</button>
-            <button class="filter-btn" data-type="saida">Saídas</button>
+        <div class="stat-card balance">
+          <div class="stat-header">
+            <span class="stat-label">Saldo</span>
+            <span class="stat-icon">⚖️</span>
+          </div>
+          <div class="stat-value" data-balance>R$ 0,00</div>
+          <div class="stat-footer">Disponível</div>
+        </div>
+      </section>
+
+      <!-- MAIN GRID -->
+      <div class="content-grid">
+        <!-- LEFT: FORM -->
+        <section class="card form-card">
+          <h3>Nova Transação</h3>
+          <form class="transaction-form" id="transaction-form">
+            <div class="form-group">
+              <label>Descrição</label>
+              <input type="text" placeholder="O que você gastou ou recebeu?" class="form-input" data-field="descricao" required />
+              <span class="form-error" data-error="descricao"></span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Valor</label>
+                <input type="text" placeholder="0,00" class="form-input" data-field="valor" id="valor-input" required />
+                <span class="form-error" data-error="valor"></span>
+              </div>
+
+              <div class="form-group">
+                <label>Categoria</label>
+                <select class="form-input" data-field="categoria" required>
+                  <option value="">Selecionar</option>
+                  <option>Alimentação</option>
+                  <option>Transporte</option>
+                  <option>Moradia</option>
+                  <option>Saúde</option>
+                  <option>Lazer</option>
+                  <option>Educação</option>
+                  <option>Outros</option>
+                </select>
+                <span class="form-error" data-error="categoria"></span>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-success" data-type="entrada">+ Entrada</button>
+              <button type="button" class="btn btn-danger" data-type="saida">- Saída</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- RIGHT: CHART -->
+        <section class="card chart-card">
+          <h3>Gastos por Categoria</h3>
+          <div class="chart-container">
+            <canvas id="category-chart" width="280" height="280"></canvas>
+          </div>
+        </section>
+      </div>
+
+      <!-- TRANSACTIONS -->
+      <section class="card">
+        <div class="section-header">
+          <h3>Transações</h3>
+          <div class="section-controls">
+            <input type="month" id="month-filter" class="filter-input" />
+            <input type="text" id="search-input" placeholder="Buscar..." class="filter-input search" />
+            <button id="filter-toggle" class="btn-filter">⚙️</button>
+            <div class="filter-dropdown">
+              <button class="filter-btn" data-type="all">Todas</button>
+              <button class="filter-btn" data-type="entrada">Entradas</button>
+              <button class="filter-btn" data-type="saida">Saídas</button>
+            </div>
           </div>
         </div>
-      </div>
-      <div id="empty-state" class="empty-state">
-        <p>📭 Nenhuma transação registrada</p>
-      </div>
-      <ul class="transaction-list"></ul>
-    </section>
 
-  </main>
+        <div id="empty-state" class="empty-state">
+          <p>📭</p>
+          <p>Nenhuma transação registrada</p>
+        </div>
 
-  <footer class="footer">
-    <p>Desenvolvido com ❤️ para portfólio</p>
-  </footer>
+        <div class="transactions-table">
+          <div class="table-header">
+            <div class="col-date">Data</div>
+            <div class="col-desc">Descrição</div>
+            <div class="col-category">Categoria</div>
+            <div class="col-value">Valor</div>
+            <div class="col-actions">Ações</div>
+          </div>
+          <ul class="transaction-list"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script src="script.js"></script>
 </body>

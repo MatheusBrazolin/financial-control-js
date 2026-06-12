@@ -1,10 +1,9 @@
 const form = document.getElementById("transaction-form");
 const lista = document.querySelector(".transaction-list");
 const emptyState = document.getElementById("empty-state");
-const themeToggle = document.getElementById("theme-toggle");
+const themeToggle = document.querySelector(".theme-btn");
 const exportCsvBtn = document.getElementById("export-csv");
 const filterToggle = document.getElementById("filter-toggle");
-const filterMenu = document.querySelector(".filter-menu");
 const filterButtons = document.querySelectorAll(".filter-btn");
 const monthFilter = document.getElementById("month-filter");
 const searchInput = document.getElementById("search-input");
@@ -20,15 +19,27 @@ const config = {
   cores: ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899"]
 };
 
-document.querySelectorAll(".btn").forEach(btn => {
+document.querySelectorAll(".btn-success, .btn-danger").forEach(btn => {
   btn.addEventListener("click", () => adicionarTransacao(btn.dataset.type));
 });
 
-filterToggle.addEventListener("click", () => filterMenu.classList.toggle("hidden"));
+document.addEventListener("click", (e) => {
+  const dropdown = document.querySelector(".filter-dropdown");
+  if (!e.target.closest(".section-controls")) {
+    dropdown.classList.remove("active");
+  }
+});
+
+filterToggle.addEventListener("click", () => {
+  const dropdown = filterToggle.nextElementSibling;
+  dropdown.classList.toggle("active");
+});
+
 filterButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     filtroAtual = btn.dataset.type;
-    filterMenu.classList.add("hidden");
+    const dropdown = filterToggle.nextElementSibling;
+    dropdown.classList.remove("active");
     renderizar();
   });
 });
@@ -47,15 +58,18 @@ valorInput.addEventListener("blur", (e) => {
 });
 
 lista.addEventListener("click", (e) => {
-  if (e.target.classList.contains("delete-btn")) {
-    const id = e.target.dataset.id;
+  const deleteBtn = e.target.closest(".btn-delete");
+  const editBtn = e.target.closest(".btn-edit");
+
+  if (deleteBtn) {
+    const id = deleteBtn.dataset.id;
     if (confirm("Excluir esta transação?")) {
       transacoes = transacoes.filter(t => t.id !== id);
       salvarLocal();
       renderizar();
     }
-  } else if (e.target.classList.contains("edit-btn")) {
-    const id = e.target.dataset.id;
+  } else if (editBtn) {
+    const id = editBtn.dataset.id;
     editarTransacao(id);
   }
 });
@@ -158,12 +172,12 @@ function renderizar() {
       li.className = `transaction-item ${t.tipo}`;
       li.innerHTML = `
         <span class="transaction-date">${t.data}</span>
-        <span class="transaction-category">${t.categoria}</span>
         <span class="transaction-description">${t.descricao}</span>
+        <span class="transaction-category">${t.categoria}</span>
         <span class="transaction-value">R$ ${t.valor.toFixed(2)}</span>
         <div class="transaction-actions">
-          <button class="edit-btn" data-id="${t.id}">Editar</button>
-          <button class="delete-btn" data-id="${t.id}">Excluir</button>
+          <button class="btn-small btn-edit" data-id="${t.id}">Editar</button>
+          <button class="btn-small btn-delete" data-id="${t.id}">Excluir</button>
         </div>
       `;
       lista.appendChild(li);
