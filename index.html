@@ -8,71 +8,83 @@
 </head>
 <body>
 
-  <!-- MENU SUPERIOR -->
   <header class="header">
     <div class="menu-top">
       <h1>💰 Controle Financeiro</h1>
       <div class="menu-actions">
-        <button id="theme-toggle">🌙</button>
-        <button id="export-csv">📄 CSV</button>
+        <button id="theme-toggle" aria-label="Alternar tema">🌙</button>
+        <button id="export-csv" aria-label="Exportar CSV">📥</button>
       </div>
     </div>
-    <p>Organize suas finanças de forma simples e inteligente</p>
+    <p>Gerencie suas finanças com inteligência</p>
   </header>
 
   <main class="container">
 
-    <!-- RESUMO FINANCEIRO -->
     <section class="summary">
       <div class="card income">
         <h3>Entradas</h3>
-        <p class="value">R$ 0,00</p>
+        <p class="value" data-income>R$ 0,00</p>
       </div>
-
       <div class="card expense">
         <h3>Saídas</h3>
-        <p class="value">R$ 0,00</p>
+        <p class="value" data-expense>R$ 0,00</p>
       </div>
-
       <div class="card total">
-        <h3>Saldo Total</h3>
-        <p class="value">R$ 0,00</p>
+        <h3>Saldo</h3>
+        <p class="value" data-balance>R$ 0,00</p>
       </div>
     </section>
 
-    <!-- FORMULÁRIO -->
     <section class="form-section">
-      <h2>Nova Transação</h2>
-      <br>
-      <form class="transaction-form">
-        <input type="text" placeholder="Descrição" required />
-        <input type="text" placeholder="Valor" required id="valor-input" />
-        <select required>
+      <h2>Adicionar Transação</h2>
+      <form class="transaction-form" id="transaction-form">
+        <input type="text" placeholder="Descrição" class="form-input" data-field="descricao" required />
+        <span class="error-msg" data-error="descricao"></span>
+
+        <input type="text" placeholder="Valor" class="form-input" data-field="valor" id="valor-input" required />
+        <span class="error-msg" data-error="valor"></span>
+
+        <select class="form-input" data-field="categoria" required>
           <option value="">Categoria</option>
           <option>Alimentação</option>
           <option>Transporte</option>
           <option>Moradia</option>
+          <option>Saúde</option>
           <option>Lazer</option>
+          <option>Educação</option>
           <option>Outros</option>
         </select>
+        <span class="error-msg" data-error="categoria"></span>
 
-        <div class="buttons">
-          <button type="button" class="btn income-btn">Entrada</button>
-          <button type="button" class="btn expense-btn">Saída</button>
+        <div class="button-group">
+          <button type="button" class="btn income-btn" data-type="entrada">+ Entrada</button>
+          <button type="button" class="btn expense-btn" data-type="saida">- Saída</button>
         </div>
       </form>
     </section>
 
-    <!-- HISTÓRICO -->
+    <section class="chart-section">
+      <h3>Gastos por Categoria</h3>
+      <canvas id="category-chart" width="400" height="250"></canvas>
+    </section>
+
     <section class="history">
-      <h2>Histórico de Transações</h2>
-      <div class="history-actions">
-        <button id="filter-toggle">☰</button>
-        <div class="filter-menu hidden">
-          <button class="filter-btn" data-type="all">Todos</button>
-          <button class="filter-btn" data-type="entrada">Entradas</button>
-          <button class="filter-btn" data-type="saida">Saídas</button>
+      <div class="history-header">
+        <h2>Transações</h2>
+        <div class="history-controls">
+          <input type="month" id="month-filter" class="month-input" aria-label="Filtrar por mês" />
+          <input type="text" id="search-input" placeholder="🔍 Buscar descrição..." class="search-input" />
+          <button id="filter-toggle" aria-label="Opções de filtro">⚙️</button>
+          <div class="filter-menu hidden">
+            <button class="filter-btn" data-type="all">Todas</button>
+            <button class="filter-btn" data-type="entrada">Entradas</button>
+            <button class="filter-btn" data-type="saida">Saídas</button>
+          </div>
         </div>
+      </div>
+      <div id="empty-state" class="empty-state">
+        <p>📭 Nenhuma transação registrada</p>
       </div>
       <ul class="transaction-list"></ul>
     </section>
@@ -80,7 +92,7 @@
   </main>
 
   <footer class="footer">
-    <p>Projeto desenvolvido para portfólio • JavaScript • HTML • CSS</p>
+    <p>Desenvolvido com ❤️ para portfólio</p>
   </footer>
 
   <script src="script.js"></script>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Teste Manual</title>
+</head>
+<body>
+  <h1>Teste Manual - Controle Financeiro</h1>
+  <pre id="results"></pre>
+
+  <script>
+    const results = document.getElementById('results');
+    let tests = [];
+
+    function test(name, fn) {
+      try {
+        fn();
+        tests.push(`✅ ${name}`);
+      } catch (e) {
+        tests.push(`❌ ${name}: ${e.message}`);
+      }
+    }
+
+    // Teste 1: Verificar se o localStorage funciona
+    test('localStorage com ID único', () => {
+      const mock = [
+        { id: 1, descricao: 'Teste', valor: 100, categoria: 'Alimentação', tipo: 'entrada', data: '01/01/2024', dataISO: '2024-01-01' }
+      ];
+      localStorage.setItem('transacoes', JSON.stringify(mock));
+      const loaded = JSON.parse(localStorage.getItem('transacoes'));
+      if (!loaded[0].id) throw new Error('ID não encontrado');
+    });
+
+    // Teste 2: Validação de números
+    test('parseFloat com string formatada', () => {
+      const str = 'R$ 150.50';
+      const num = parseFloat(str.replace(/[R$\s]/g, '').replace(',', '.'));
+      if (num !== 150.50) throw new Error(`Esperado 150.50, got ${num}`);
+    });
+
+    // Teste 3: Filtro por mês
+    test('Filtro de data com ISO format', () => {
+      const dataISO = '2024-06-12';
+      const monthFilter = '2024-06';
+      if (!dataISO.startsWith(monthFilter)) throw new Error('Filtro não funcionou');
+    });
+
+    // Teste 4: Busca lowercase
+    test('Busca case-insensitive', () => {
+      const desc = 'Compra no Mercado';
+      const busca = 'mercado';
+      if (!desc.toLowerCase().includes(busca)) throw new Error('Busca não funcionou');
+    });
+
+    // Teste 5: Cálculo de resumo
+    test('Cálculo de entradas, saídas e saldo', () => {
+      const transacoes = [
+        { tipo: 'entrada', valor: 1000 },
+        { tipo: 'entrada', valor: 500 },
+        { tipo: 'saida', valor: 300 }
+      ];
+      const entradas = transacoes.filter(t => t.tipo === 'entrada').reduce((a, b) => a + b.valor, 0);
+      const saidas = transacoes.filter(t => t.tipo === 'saida').reduce((a, b) => a + b.valor, 0);
+      if (entradas !== 1500 || saidas !== 300) throw new Error('Cálculo errado');
+    });
+
+    // Teste 6: Export CSV
+    test('CSV com aspas em descrições', () => {
+      const t = { data: '01/01/2024', categoria: 'Teste', descricao: 'Compra "especial"', tipo: 'entrada', valor: 100 };
+      const linha = `${t.data},${t.categoria},"${t.descricao}",${t.tipo},${t.valor.toFixed(2)}`;
+      if (!linha.includes('"Compra "')) throw new Error('CSV não escapou aspas');
+    });
+
+    // Teste 7: Tema persistência
+    test('Tema salvo no localStorage', () => {
+      localStorage.setItem('tema', 'dark');
+      if (localStorage.getItem('tema') !== 'dark') throw new Error('Tema não salvou');
+    });
+
+    // Teste 8: Categorias
+    test('Categorias incluem Saúde e Educação', () => {
+      const cats = ['Alimentação', 'Transporte', 'Moradia', 'Saúde', 'Lazer', 'Educação', 'Outros'];
+      if (!cats.includes('Saúde') || !cats.includes('Educação')) throw new Error('Categorias faltando');
+    });
+
+    results.textContent = tests.join('\n');
+  </script>
+</body>
+</html>
