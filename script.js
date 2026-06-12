@@ -49,6 +49,14 @@ exportCsvBtn.addEventListener("click", exportarCSV);
 monthFilter.addEventListener("change", renderizar);
 searchInput.addEventListener("input", (e) => { busca = e.target.value.toLowerCase(); renderizar(); });
 
+// Atalho de teclado para dark mode
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+    e.preventDefault();
+    toggleTheme();
+  }
+});
+
 valorInput.addEventListener("blur", (e) => {
   let val = e.target.value.replace(/\D/g, '');
   if (val) {
@@ -62,14 +70,14 @@ lista.addEventListener("click", (e) => {
   const editBtn = e.target.closest(".btn-edit");
 
   if (deleteBtn) {
-    const id = deleteBtn.dataset.id;
+    const id = parseInt(deleteBtn.dataset.id);
     if (confirm("Excluir esta transação?")) {
       transacoes = transacoes.filter(t => t.id !== id);
       salvarLocal();
       renderizar();
     }
   } else if (editBtn) {
-    const id = editBtn.dataset.id;
+    const id = parseInt(editBtn.dataset.id);
     editarTransacao(id);
   }
 });
@@ -134,7 +142,8 @@ function limparErros() {
   form.querySelectorAll(".error-msg").forEach(msg => msg.textContent = "");
 }
 
-function editarTransacao(id) {
+function editarTransacao(idParam) {
+  const id = parseInt(idParam);
   const t = transacoes.find(x => x.id === id);
   if (!t) return;
 
