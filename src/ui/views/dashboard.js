@@ -21,6 +21,14 @@ function insightCard({ label, value, detail, tone = "" }) {
   ]);
 }
 
+/** Legenda do saldo: guardar X% só faz sentido quando sobrou dinheiro. */
+function balanceFooter(data) {
+  if (!data.income && !data.expense) return "Nada lançado neste mês";
+  if (data.balance < 0) return `${formatMoney(-data.balance)} a mais do que entrou`;
+  if (!data.income) return "Sem entradas registradas";
+  return `Sobraram ${Math.round(data.savingsRate * 100)}% do que entrou`;
+}
+
 export function renderDashboard(state) {
   const { transactions, month } = state;
   const data = insights(transactions, month);
@@ -44,10 +52,7 @@ export function renderDashboard(state) {
       label: "Saldo do mês",
       value: formatMoney(data.balance),
       tone: data.balance < 0 ? "negative" : "balance",
-      footer:
-        data.savingsRate === null
-          ? "Sem entradas registradas"
-          : `${Math.round(data.savingsRate * 100)}% do que entrou`,
+      footer: balanceFooter(data),
     }),
   ]);
 

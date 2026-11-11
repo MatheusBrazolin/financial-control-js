@@ -11,7 +11,9 @@
     />
     <title>Controle Financeiro</title>
 
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E" />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/icon-180.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="assets/css/styles.css" />
 
     <script>
@@ -92,6 +94,14 @@
               <button class="icon-btn" type="button" id="month-next" aria-label="Próximo mês">›</button>
             </div>
 
+            <button class="btn btn--ghost btn--small" type="button" id="month-today" hidden>
+              Hoje
+            </button>
+
+            <button class="icon-btn" type="button" id="help-btn" aria-label="Atalhos de teclado" title="Atalhos (?)">
+              <span aria-hidden="true">?</span>
+            </button>
+
             <button class="icon-btn" type="button" id="theme-btn" aria-label="Alternar tema" title="Alternar tema (Ctrl/⌘ + J)">
               <span aria-hidden="true">◐</span>
             </button>
@@ -152,6 +162,8 @@
                     <button class="segmented__btn" type="button" data-filter-type="income">Entradas</button>
                     <button class="segmented__btn" type="button" data-filter-type="expense">Saídas</button>
                   </div>
+                  <label class="sr-only" for="category-filter">Filtrar por categoria</label>
+                  <select class="filter-select" id="category-filter"></select>
                   <label class="checkbox checkbox--inline">
                     <input type="checkbox" id="recurring-filter" />
                     <span>Só recorrentes</span>
@@ -175,6 +187,7 @@
                     </tr>
                   </thead>
                   <tbody id="tx-tbody"></tbody>
+                  <tfoot id="tx-tfoot"></tfoot>
                 </table>
               </div>
 

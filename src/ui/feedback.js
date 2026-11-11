@@ -60,6 +60,7 @@ export function toast(message, options = {}) {
 export function confirmDialog({
   title,
   message,
+  list,
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
   danger = false,
@@ -69,12 +70,22 @@ export function confirmDialog({
       el("form", { method: "dialog", class: "dialog__body" }, [
         el("h2", { class: "dialog__title", text: title }),
         message && el("p", { class: "dialog__message", text: message }),
+        list &&
+          el(
+            "dl",
+            { class: "shortcut-list" },
+            list.flatMap(([keys, description]) => [
+              el("dt", {}, [el("kbd", { text: keys })]),
+              el("dd", { text: description }),
+            ])
+          ),
         el("div", { class: "dialog__actions" }, [
-          el("button", {
-            class: "btn btn--ghost",
-            value: "cancel",
-            text: cancelLabel,
-          }),
+          cancelLabel &&
+            el("button", {
+              class: "btn btn--ghost",
+              value: "cancel",
+              text: cancelLabel,
+            }),
           el("button", {
             class: `btn ${danger ? "btn--danger" : "btn--primary"}`,
             value: "confirm",

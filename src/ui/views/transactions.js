@@ -1,11 +1,12 @@
 import { el, $, render } from "../dom.js";
 import { formatMoney } from "../../domain/money.js";
-import { formatDate, monthLabel } from "../../domain/dates.js";
+import { formatDate, monthLabel, monthLabelShort } from "../../domain/dates.js";
 import {
   filterTransactions,
   sortTransactions,
   colorOf,
 } from "../../domain/transactions.js";
+import { totals } from "../../domain/stats.js";
 
 let sort = { key: "date", direction: "desc" };
 
@@ -35,9 +36,40 @@ export function visibleTransactions(state) {
       month: state.month,
       type: state.filters.type,
       query: state.filters.query,
+      category: state.filters.category,
       onlyRecurring: state.filters.onlyRecurring,
     })
   );
+}
+
+function isFiltering(filters) {
+  return Boolean(
+    filters.query ||
+      filters.type !== "all" ||
+      filters.category !== "all" ||
+      filters.onlyRecurring
+  );
+}
+
+/** Rodapé com o total do que está em tela — não do mês inteiro. */
+function renderTotals(rows) {
+  const { income, expense, balance } = totals(rows);
+  render($("#tx-tfoot"), [
+    el("tr", {}, [
+      el("td", { class: "table__total-label", colSpan: 3, text: "Total filtrado" }),
+      el("td", { class: "num" }, [
+        el("span", { class: "is-income", text: `+ ${formatMoney(income)}` }),
+        el("br"),
+        el("span", { class: "is-expense", text: `− ${formatMoney(expense)}` }),
+        el("br"),
+        el("strong", {
+          class: balance < 0 ? "is-expense" : "",
+          text: formatMoney(balance),
+        }),
+      ]),
+      el("td", {}),
+    ]),
+  ]);
 }
 
 export function renderTransactions(state, handlers) {
@@ -60,11 +92,9 @@ export function renderTransactions(state, handlers) {
 
   if (!rows.length) {
     render(tbody, []);
+    render($("#tx-tfoot"), []);
     empty.hidden = false;
-    const filtering =
-      state.filters.query ||
-      state.filters.type !== "all" ||
-      state.filters.onlyRecurring;
+    const filtering = isFiltering(state.filters);
     render(empty, [
       el("p", { class: "empty__icon", "aria-hidden": "true", text: "🗂️" }),
       el("p", {
@@ -76,16 +106,22 @@ export function renderTransactions(state, handlers) {
       el("p", {
         class: "empty__text",
         text: filtering
-          ? "Tente limpar a busca ou escolher outro tipo."
+          ? "Tente limpar os filtros ou escolher outro mês."
           : "Registre a primeira movimentação para ver os números aparecerem.",
       }),
-      !filtering &&
-        el("button", {
-          class: "btn btn--primary",
-          type: "button",
-          text: "Adicionar transação",
-          onClick: handlers.onCreate,
-        }),
+      filtering
+        ? el("button", {
+            class: "btn btn--ghost",
+            type: "button",
+            text: "Limpar filtros",
+            onClick: handlers.onClearFilters,
+          })
+        : el("button", {
+            class: "btn btn--primary",
+            type: "button",
+            text: "Adicionar transação",
+            onClick: handlers.onCreate,
+          }),
     ]);
     return;
   }
@@ -99,12 +135,21 @@ export function renderTransactions(state, handlers) {
         el("td", {}, [
           el("span", { class: "table__desc" }, [
             el("span", { text: t.description }),
-            (t.recurring || t.seriesId) &&
+            t.recurring &&
+              el("button", {
+                class: "chip chip--recurring chip--action",
+                type: "button",
+                title: "Recorrência ativa — clique para encerrar",
+                text: t.recurringUntil
+                  ? `até ${monthLabelShort(t.recurringUntil)}`
+                  : "mensal",
+                onClick: () => handlers.onStopRecurrence(t),
+              }),
+            !t.recurring &&
+              t.seriesId &&
               el("span", {
                 class: "chip chip--recurring",
-                title: t.recurring
-                  ? "Transação recorrente (modelo)"
-                  : "Gerada automaticamente por uma recorrência",
+                title: "Gerada automaticamente por uma recorrência",
                 text: "mensal",
               }),
           ]),
@@ -122,7 +167,7 @@ export function renderTransactions(state, handlers) {
           class: `num ${t.type === "income" ? "is-income" : "is-expense"}`,
           text: `${t.type === "income" ? "+" : "−"} ${formatMoney(t.amount)}`,
         }),
-        el("td", { class: "table__actions" }, [
+        el("td", { class: "table__actions", "data-label": "Ações" }, [
           el("button", {
             class: "icon-btn",
             type: "button",
@@ -130,6 +175,14 @@ export function renderTransactions(state, handlers) {
             title: "Editar",
             text: "✎",
             onClick: () => handlers.onEdit(t),
+          }),
+          el("button", {
+            class: "icon-btn",
+            type: "button",
+            "aria-label": `Duplicar ${t.description}`,
+            title: "Duplicar",
+            text: "⧉",
+            onClick: () => handlers.onDuplicate(t),
           }),
           el("button", {
             class: "icon-btn icon-btn--danger",
@@ -143,4 +196,28 @@ export function renderTransactions(state, handlers) {
       ])
     )
   );
+
+  renderTotals(rows);
+}
+
+/** Preenche o seletor de categoria com o que existe no mês. */
+export function renderCategoryFilter(state) {
+  const select = $("#category-filter");
+  const used = [
+    ...new Set(
+      state.transactions
+        .filter((t) => t.date.slice(0, 7) === state.month)
+        .map((t) => t.category)
+    ),
+  ].sort((a, b) => a.localeCompare(b, "pt-BR"));
+
+  render(select, [
+    el("option", { value: "all", text: "Todas as categorias" }),
+    ...used.map((c) => el("option", { value: c, text: c })),
+  ]);
+
+  // A categoria filtrada pode não existir no mês para onde o usuário navegou;
+  // nesse caso o filtro cai para "todas" em vez de esconder o mês inteiro.
+  if (!used.includes(state.filters.category)) state.filters.category = "all";
+  select.value = state.filters.category;
 }

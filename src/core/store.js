@@ -71,7 +71,7 @@ const state = {
   transactions: [],
   budgets: {},
   month: currentMonth(),
-  filters: { type: "all", query: "", onlyRecurring: false },
+  filters: { type: "all", query: "", category: "all", onlyRecurring: false },
   persistent: true,
 };
 
@@ -89,6 +89,21 @@ function persist() {
   return ok;
 }
 
+/**
+ * Gera as parcelas que faltam das recorrências sobre o estado em memória.
+ * Trabalhar em memória (e não relendo o localStorage) é o que garante que
+ * nada se perca quando a gravação falha — modo privativo, cota cheia.
+ * @returns {number} quantas parcelas foram criadas
+ */
+function applyRecurring() {
+  const generated = expandRecurring(state.transactions);
+  if (generated.length) {
+    state.transactions.push(...generated);
+    persist();
+  }
+  return generated.length;
+}
+
 export const store = {
   get state() {
     return state;
@@ -102,14 +117,9 @@ export const store = {
   init() {
     state.transactions = loadTransactions();
     state.budgets = loadBudgets();
-
-    const generated = expandRecurring(state.transactions);
-    if (generated.length) {
-      state.transactions.push(...generated);
-      persist();
-    }
+    const generated = applyRecurring();
     emit();
-    return generated.length;
+    return generated;
   },
 
   setMonth(month) {
@@ -122,13 +132,29 @@ export const store = {
     emit();
   },
 
+  clearFilters() {
+    state.filters = { type: "all", query: "", category: "all", onlyRecurring: false };
+    emit();
+  },
+
+  /** @returns {{transaction: object, generated: number}} */
   addTransaction(data) {
     const transaction = {
+      recurringUntil: null,
       ...data,
       id: newId(),
       seriesId: null,
       createdAt: new Date().toISOString(),
     };
+    state.transactions.push(transaction);
+    persist();
+    const generated = applyRecurring();
+    emit();
+    return { transaction, generated };
+  },
+
+  /** Insere uma transação já pronta (duplicar, desfazer). */
+  insertTransaction(transaction) {
     state.transactions.push(transaction);
     persist();
     emit();
@@ -140,8 +166,28 @@ export const store = {
     if (index === -1) return null;
     state.transactions[index] = { ...state.transactions[index], ...patch, id };
     persist();
+    // Virar recorrente (ou esticar o fim da série) precisa gerar as parcelas.
+    const generated = applyRecurring();
     emit();
-    return state.transactions[index];
+    return { transaction: state.transactions[index], generated };
+  },
+
+  /**
+   * Encerra uma recorrência no mês informado: o template continua existindo,
+   * mas para de gerar parcelas daí em diante. As parcelas já lançadas depois
+   * desse mês são removidas.
+   */
+  stopRecurrence(id, month) {
+    const template = state.transactions.find((t) => t.id === id);
+    if (!template || !template.recurring) return 0;
+    template.recurringUntil = month;
+    const before = state.transactions.length;
+    state.transactions = state.transactions.filter(
+      (t) => !(t.seriesId === id && t.date.slice(0, 7) > month)
+    );
+    persist();
+    emit();
+    return before - state.transactions.length;
   },
 
   /** Remove uma transação (e as parcelas da série, se for um template). */
@@ -180,6 +226,7 @@ export const store = {
     emit();
   },
 
+  /** @returns {number} quantas transações entraram */
   replaceAll({ transactions, budgets }) {
     state.transactions = transactions.map(migrate).filter(Boolean);
     state.budgets = {};
@@ -190,7 +237,9 @@ export const store = {
       }
     }
     persist();
+    applyRecurring();
     emit();
+    return state.transactions.length;
   },
 
   clearAll() {

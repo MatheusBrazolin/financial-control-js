@@ -96,6 +96,11 @@ button {
   border: none;
 }
 
+/* Um `display` próprio vence o `[hidden]` do navegador — daí o !important. */
+[hidden] {
+  display: none !important;
+}
+
 a {
   color: var(--brand);
   text-decoration: none;
@@ -488,6 +493,56 @@ canvas {
   font-size: 11px;
   padding: 1px 8px;
 }
+.chip--action {
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.chip--action:hover {
+  filter: brightness(0.94);
+  text-decoration: line-through;
+}
+
+.btn--small {
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+.filter-select {
+  padding: 7px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  color: var(--text-soft);
+  cursor: pointer;
+  max-width: 190px;
+}
+.filter-select:focus {
+  border-color: var(--brand);
+}
+
+.shortcut-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  align-items: center;
+  margin-top: 16px;
+}
+.shortcut-list dd {
+  font-size: 13.5px;
+  color: var(--text-soft);
+}
+kbd {
+  display: inline-block;
+  padding: 3px 8px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
 
 /* formulário */
 .field {
@@ -876,6 +931,23 @@ select.field__input {
   padding: 28px 12px;
   text-align: center;
   color: var(--text-muted);
+}
+.table tfoot td {
+  padding-top: 14px;
+  border-top: 2px solid var(--border);
+  border-bottom: none;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.table__total-label {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  vertical-align: bottom;
+}
+.table tfoot strong {
+  font-size: 15px;
 }
 .table td.num {
   font-weight: 600;

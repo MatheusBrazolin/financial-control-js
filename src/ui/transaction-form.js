@@ -6,10 +6,10 @@
  * aba Transações preenchia um formulário que o usuário nem estava vendo.
  */
 
-import { el, $, $$ } from "./dom.js";
+import { el, $, $$, render } from "./dom.js";
 import { parseAmount, formatMoney } from "../domain/money.js";
 import { todayISO } from "../domain/dates.js";
-import { CATEGORIES, validate } from "../domain/transactions.js";
+import { categoriesFor, validate } from "../domain/transactions.js";
 
 let dialog = null;
 let resolver = null;
@@ -64,17 +64,20 @@ function build() {
         })),
       ]),
 
-      field("tx-category", "Categoria", el(
-        "select",
-        { class: "field__input", id: "tx-category", name: "category", required: true },
-        [
-          el("option", { value: "", text: "Selecione…" }),
-          ...CATEGORIES.map((c) => el("option", { value: c, text: c })),
-        ]
-      )),
+      field("tx-category", "Categoria", el("select", {
+        class: "field__input",
+        id: "tx-category",
+        name: "category",
+        required: true,
+      })),
 
       el("label", { class: "checkbox" }, [
-        el("input", { type: "checkbox", id: "tx-recurring", name: "recurring" }),
+        el("input", {
+          type: "checkbox",
+          id: "tx-recurring",
+          name: "recurring",
+          onChange: syncRecurringFields,
+        }),
         el("span", {}, [
           el("strong", { text: "Repetir todo mês" }),
           el("small", {
@@ -82,6 +85,15 @@ function build() {
             text: "Lança automaticamente uma cópia nos meses seguintes.",
           }),
         ]),
+      ]),
+
+      el("div", { class: "tx-form__until", id: "tx-until-wrap", hidden: true }, [
+        field("tx-until", "Repetir até (opcional)", el("input", {
+          class: "field__input",
+          id: "tx-until",
+          name: "recurringUntil",
+          type: "month",
+        })),
       ]),
 
       el("div", { class: "dialog__actions" }, [
@@ -135,9 +147,38 @@ function typeOption(value, label, checked) {
       value,
       checked,
       class: "sr-only",
+      onChange: () => syncCategories(),
     }),
     el("span", { text: label }),
   ]);
+}
+
+function currentType() {
+  return $$('input[name="type"]').find((r) => r.checked)?.value ?? "expense";
+}
+
+/**
+ * Lista só as categorias que fazem sentido para o tipo escolhido — "Salário"
+ * não tem por que aparecer numa saída. Mantém a seleção quando ela continua
+ * válida no novo tipo.
+ */
+function syncCategories(preferred) {
+  const select = $("#tx-category");
+  const wanted = preferred ?? select.value;
+  const options = categoriesFor(currentType());
+
+  render(select, [
+    el("option", { value: "", text: "Selecione…" }),
+    ...options.map((c) => el("option", { value: c, text: c })),
+  ]);
+  select.value = options.includes(wanted) ? wanted : "";
+}
+
+/** O campo "repetir até" só existe quando a transação é recorrente. */
+function syncRecurringFields() {
+  const on = $("#tx-recurring").checked;
+  $("#tx-until-wrap").hidden = !on;
+  if (!on) $("#tx-until").value = "";
 }
 
 function field(id, label, input) {
@@ -148,15 +189,24 @@ function field(id, label, input) {
   ]);
 }
 
+/** Cada campo do formulário e a chave de erro que o acompanha. */
+const FIELDS = [
+  ["tx-description", "description"],
+  ["tx-amount", "amount"],
+  ["tx-category", "category"],
+  ["tx-date", "date"],
+  ["tx-until", "recurringUntil"],
+];
+
 function showErrors(errors) {
-  for (const id of ["description", "amount", "category", "date"]) {
-    const input = $(`#tx-${id}`);
-    const error = $(`#tx-${id}-error`);
-    const message = errors[id] || "";
+  for (const [id, key] of FIELDS) {
+    const input = $(`#${id}`);
+    const error = $(`#${id}-error`);
+    const message = errors[key] || "";
     error.textContent = message;
     input.classList.toggle("field__input--invalid", Boolean(message));
     input.setAttribute("aria-invalid", message ? "true" : "false");
-    input.setAttribute("aria-describedby", message ? `tx-${id}-error` : "");
+    input.setAttribute("aria-describedby", message ? `${id}-error` : "");
   }
   const first = $(".field__input--invalid");
   if (first) first.focus();
@@ -169,8 +219,9 @@ function onSubmit(event) {
     amount: parseAmount($("#tx-amount").value),
     category: $("#tx-category").value,
     date: $("#tx-date").value,
-    type: $$('input[name="type"]').find((r) => r.checked)?.value,
+    type: currentType(),
     recurring: $("#tx-recurring").checked,
+    recurringUntil: $("#tx-until").value || null,
   };
 
   const { valid, errors } = validate(data);
@@ -202,12 +253,14 @@ export function openTransactionForm(transaction = null) {
 
   $("#tx-description").value = transaction?.description ?? "";
   $("#tx-amount").value = transaction ? formatMoney(transaction.amount) : "";
-  $("#tx-category").value = transaction?.category ?? "";
   $("#tx-date").value = transaction?.date ?? todayISO();
   $("#tx-recurring").checked = transaction?.recurring ?? false;
   for (const radio of $$('input[name="type"]')) {
     radio.checked = radio.value === (transaction?.type ?? "expense");
   }
+  syncCategories(transaction?.category ?? "");
+  syncRecurringFields();
+  $("#tx-until").value = transaction?.recurringUntil ?? "";
   showErrors({});
 
   dialog.showModal();

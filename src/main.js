@@ -11,9 +11,12 @@ import { autoRedraw } from "./ui/charts.js";
 import { renderDashboard } from "./ui/views/dashboard.js";
 import {
   renderTransactions,
+  renderCategoryFilter,
   visibleTransactions,
   setSort,
 } from "./ui/views/transactions.js";
+import { duplicate } from "./domain/transactions.js";
+import { todayISO } from "./domain/dates.js";
 import { renderBudgets } from "./ui/views/budgets.js";
 import { renderReports, renderComparison } from "./ui/views/reports.js";
 import { parseAmount, formatMoney } from "./domain/money.js";
@@ -72,16 +75,21 @@ function showView(name) {
 function renderActiveView() {
   const state = store.state;
   $("#month-input").value = state.month;
+  $("#month-today").hidden = state.month === currentMonth();
 
   switch (activeView) {
     case "dashboard":
       renderDashboard(state);
       break;
     case "transacoes":
+      renderCategoryFilter(state);
       renderTransactions(state, {
         onCreate: createTransaction,
         onEdit: editTransaction,
         onDelete: deleteTransaction,
+        onDuplicate: duplicateTransaction,
+        onStopRecurrence: stopRecurrence,
+        onClearFilters: clearFilters,
       });
       break;
     case "orcamentos":
@@ -98,19 +106,72 @@ function renderActiveView() {
 }
 
 // ──────────────────────── ações de transação ─────────────────────
+function recurrenceNote(generated) {
+  return generated
+    ? ` ${generated} parcela${generated > 1 ? "s" : ""} da recorrência gerada${
+        generated > 1 ? "s" : ""
+      }.`
+    : "";
+}
+
 async function createTransaction() {
   const data = await openTransactionForm();
   if (!data) return;
-  store.addTransaction(data);
-  store.init(); // regenera as parcelas se a nova transação for recorrente
-  toast("Transação adicionada.", { type: "success" });
+  const { generated } = store.addTransaction(data);
+  store.setMonth(data.date.slice(0, 7));
+  toast(`Transação adicionada.${recurrenceNote(generated)}`, { type: "success" });
 }
 
 async function editTransaction(transaction) {
   const data = await openTransactionForm(transaction);
   if (!data) return;
-  store.updateTransaction(transaction.id, data);
-  toast("Transação atualizada.", { type: "success" });
+  const { generated } = store.updateTransaction(transaction.id, data);
+  toast(`Transação atualizada.${recurrenceNote(generated)}`, { type: "success" });
+}
+
+function duplicateTransaction(transaction) {
+  const copy = duplicate(transaction, todayISO());
+  store.insertTransaction(copy);
+  toast(`"${copy.description}" duplicada para hoje.`, {
+    type: "success",
+    action: {
+      label: "Desfazer",
+      onClick: () => store.removeTransaction(copy.id),
+    },
+  });
+}
+
+async function stopRecurrence(template) {
+  const month = store.state.month;
+  const ok = await confirmDialog({
+    title: "Encerrar recorrência?",
+    message: `"${template.description}" para de se repetir depois de ${monthLabel(
+      month
+    )}. Os lançamentos até lá continuam; os posteriores são removidos.`,
+    confirmLabel: "Encerrar",
+  });
+  if (!ok) return;
+
+  const removed = store.stopRecurrence(template.id, month);
+  toast(
+    removed
+      ? `Recorrência encerrada e ${removed} lançamento${
+          removed > 1 ? "s futuros removidos" : " futuro removido"
+        }.`
+      : "Recorrência encerrada.",
+    { type: "info" }
+  );
+}
+
+function clearFilters() {
+  store.clearFilters();
+  $("#search-input").value = "";
+  $("#recurring-filter").checked = false;
+  for (const button of $$("[data-filter-type]")) {
+    const all = button.dataset.filterType === "all";
+    button.classList.toggle("is-active", all);
+    button.setAttribute("aria-pressed", String(all));
+  }
 }
 
 async function deleteTransaction(transaction) {
@@ -152,11 +213,11 @@ function removeBudget(category) {
 }
 
 function editBudget(item) {
-  $("#budget-category").value = "";
-  $("#budget-amount").value = formatMoney(item.limit);
-  $("#budget-amount").dataset.editing = item.category;
-  $("#budget-amount").focus();
-  toast(`Informe o novo limite para ${item.category}.`, { duration: 3500 });
+  $("#budget-category").value = item.category;
+  const amount = $("#budget-amount");
+  amount.value = formatMoney(item.limit);
+  amount.focus();
+  amount.select();
 }
 
 // ────────────────────────── import/export ────────────────────────
@@ -209,9 +270,8 @@ async function importBackup(file) {
       danger: true,
     });
     if (!ok) return;
-    store.replaceAll(data);
-    store.init();
-    toast("Backup importado.", { type: "success" });
+    const count = store.replaceAll(data);
+    toast(`Backup importado: ${count} transações.`, { type: "success" });
   } catch (error) {
     toast(error.message || "Não foi possível ler o arquivo.", { type: "error" });
   }
@@ -275,6 +335,13 @@ function bindEvents() {
   $("#month-next").addEventListener("click", () =>
     store.setMonth(addMonths(store.state.month, 1))
   );
+  $("#month-today").addEventListener("click", () => store.setMonth(currentMonth()));
+
+  $("#help-btn").addEventListener("click", showShortcuts);
+
+  $("#category-filter").addEventListener("change", (event) =>
+    store.setFilters({ category: event.target.value })
+  );
 
   // Filtros da aba Transações
   let searchTimer;
@@ -309,7 +376,7 @@ function bindEvents() {
   $("#budget-form").addEventListener("submit", (event) => {
     event.preventDefault();
     const amountInput = $("#budget-amount");
-    const category = amountInput.dataset.editing || $("#budget-category").value;
+    const category = $("#budget-category").value;
     const cents = parseAmount(amountInput.value);
 
     if (!category) {
@@ -323,7 +390,6 @@ function bindEvents() {
     }
 
     store.setBudget(category, cents);
-    delete amountInput.dataset.editing;
     event.target.reset();
     toast(`Limite de ${category} definido em ${formatMoney(cents)}.`, {
       type: "success",
@@ -364,10 +430,69 @@ function bindEvents() {
       event.preventDefault();
       location.hash = "#/transacoes";
       $("#search-input").focus();
+    } else if (event.key === "?") {
+      event.preventDefault();
+      showShortcuts();
+    } else if (event.key === "ArrowLeft") {
+      store.setMonth(addMonths(store.state.month, -1));
+    } else if (event.key === "ArrowRight") {
+      store.setMonth(addMonths(store.state.month, 1));
     } else if (event.key === "Escape") {
       closeSidebar();
     }
   });
+}
+
+const SHORTCUTS = [
+  ["N", "Nova transação"],
+  ["/", "Buscar transações"],
+  ["←  →", "Mês anterior / próximo"],
+  ["?", "Esta ajuda"],
+  ["Ctrl / ⌘ + J", "Alternar tema"],
+  ["Esc", "Fechar diálogo ou menu"],
+];
+
+function showShortcuts() {
+  confirmDialog({
+    title: "Atalhos de teclado",
+    list: SHORTCUTS,
+    confirmLabel: "Entendi",
+    cancelLabel: null,
+  });
+}
+
+// ──────────────────────── offline (service worker) ───────────────
+function registerServiceWorker() {
+  // file:// e navegadores sem suporte simplesmente seguem sem offline.
+  if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
+
+  navigator.serviceWorker
+    .register("sw.js")
+    .then((registration) => {
+      registration.addEventListener("updatefound", () => {
+        const incoming = registration.installing;
+        if (!incoming) return;
+        incoming.addEventListener("statechange", () => {
+          // Só avisa quando JÁ existia uma versão instalada: na primeira
+          // visita não há nada a atualizar.
+          if (incoming.state === "installed" && navigator.serviceWorker.controller) {
+            toast("Nova versão disponível.", {
+              duration: 20000,
+              action: {
+                label: "Atualizar",
+                onClick: () => {
+                  incoming.postMessage("skip-waiting");
+                  location.reload();
+                },
+              },
+            });
+          }
+        });
+      });
+    })
+    .catch(() => {
+      /* sem offline, o app continua funcionando normalmente */
+    });
 }
 
 // ───────────────────────────── bootstrap ─────────────────────────
@@ -380,6 +505,7 @@ function start() {
   $("#compare-b").value = now;
 
   bindEvents();
+  registerServiceWorker();
   store.subscribe(renderActiveView);
   autoRedraw(renderActiveView);
 

@@ -2,7 +2,7 @@ import { el, $, render } from "../dom.js";
 import { formatMoney } from "../../domain/money.js";
 import { monthLabel } from "../../domain/dates.js";
 import { budgetStatus } from "../../domain/stats.js";
-import { CATEGORIES, colorOf } from "../../domain/transactions.js";
+import { EXPENSE_CATEGORIES, colorOf } from "../../domain/transactions.js";
 
 const STATUS_TEXT = {
   ok: "dentro do limite",
@@ -14,15 +14,20 @@ export function renderBudgets(state, handlers) {
   const list = budgetStatus(state.transactions, state.budgets, state.month);
   $("#budget-subtitle").textContent = monthLabel(state.month);
 
-  // Só oferece categorias que ainda não têm limite definido.
+  // Orçamento é teto de gasto, então só categorias de saída entram aqui.
+  // As que já têm limite continuam na lista: escolhê-las sobrescreve o valor.
   const select = $("#budget-category");
   const previous = select.value;
-  const available = CATEGORIES.filter((c) => !(c in state.budgets));
   render(select, [
-    el("option", { value: "", text: available.length ? "Selecione…" : "Todas já têm limite" }),
-    ...available.map((c) => el("option", { value: c, text: c })),
+    el("option", { value: "", text: "Selecione…" }),
+    ...EXPENSE_CATEGORIES.map((c) =>
+      el("option", {
+        value: c,
+        text: c in state.budgets ? `${c} (alterar)` : c,
+      })
+    ),
   ]);
-  if (available.includes(previous)) select.value = previous;
+  select.value = EXPENSE_CATEGORIES.includes(previous) ? previous : "";
 
   if (!list.length) {
     render($("#budget-grid"), [

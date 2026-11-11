@@ -9,10 +9,11 @@ Aplicativo de finanças pessoais em **HTML, CSS e JavaScript puro** — sem fram
 ## Funcionalidades
 
 **Lançamentos**
-- Entradas e saídas com descrição, valor, data e categoria
-- Edição e exclusão com **desfazer**
-- Transações recorrentes: o lançamento se repete sozinho nos meses seguintes, respeitando meses curtos (31/01 → 28/02)
-- Busca por descrição ou categoria, filtro por tipo e ordenação por data ou valor
+- Entradas e saídas com descrição, valor, data e categoria — categorias separadas por tipo, para "Salário" não aparecer numa despesa
+- Edição, duplicação e exclusão, as duas últimas com **desfazer**
+- Transações recorrentes: o lançamento se repete sozinho nos meses seguintes, respeitando meses curtos (31/01 → 28/02), com fim opcional e botão para encerrar a série
+- Busca por descrição ou categoria, filtro por tipo e por categoria, ordenação por data ou valor
+- Total do que está filtrado no rodapé da tabela
 
 **Visão do mês**
 - Entradas, saídas e saldo do mês selecionado, com taxa de poupança
@@ -32,10 +33,11 @@ Aplicativo de finanças pessoais em **HTML, CSS e JavaScript puro** — sem fram
 **Dados e interface**
 - Exportar CSV (separador `;` e BOM UTF-8 — abre certo no Excel em português)
 - Backup e restauração em JSON
+- **Instalável e offline**: service worker + manifesto, funciona sem internet e abre como app no celular e no desktop
 - Tema claro/escuro, seguindo a preferência do sistema na primeira visita
 - Layout responsivo: no celular a tabela vira lista de cartões
 - Navegação por teclado, foco visível, rótulos e `aria-*` nos componentes
-- Atalhos: `N` nova transação · `/` buscar · `Ctrl`/`⌘ + J` alternar tema
+- Atalhos (`?` mostra a lista): `N` nova transação · `/` buscar · `←` `→` trocar de mês · `Ctrl`/`⌘ + J` alternar tema
 
 ---
 
@@ -47,11 +49,7 @@ O projeto usa ES Modules, então precisa ser servido por HTTP (abrir o `index.ht
 npm start          # sobe em http://localhost:4173
 ```
 
-Ou qualquer servidor estático:
-
-```bash
-python3 -m http.server 4173
-```
+O `npm start` usa um servidor estático de ~50 linhas em `scripts/serve.mjs`, escrito com os módulos nativos do Node — não baixa nada. Qualquer outro servidor estático também serve.
 
 ## Testes
 
@@ -61,7 +59,7 @@ As regras de negócio ficam isoladas em módulos puros (`src/domain/`), sem DOM 
 npm test
 ```
 
-São 46 testes cobrindo conversão de moeda, datas, recorrências, filtros, estatísticas, orçamentos e exportação.
+São 54 testes cobrindo conversão de moeda, datas, recorrências (inclusive o fim da série e o mês curto), filtros, estatísticas, orçamentos, duplicação e exportação.
 
 ---
 
@@ -69,7 +67,12 @@ São 46 testes cobrindo conversão de moeda, datas, recorrências, filtros, esta
 
 ```
 index.html                 markup semântico das quatro telas
+manifest.webmanifest       instalação como app
+sw.js                      cache offline (nunca toca nos seus dados)
 assets/css/styles.css      tokens de tema, componentes e responsivo
+assets/icon*.png|svg       ícones, gerados por npm run icons
+scripts/serve.mjs          servidor estático de desenvolvimento
+scripts/build-icons.mjs    gera os PNGs do manifesto (PNG escrito na mão)
 src/
   main.js                  entrada: roteador, atalhos, import/export
   core/store.js            estado, persistência e migração dos dados
