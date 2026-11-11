@@ -1,5 +1,7 @@
 # Controle Financeiro
 
+[![CI](https://github.com/MatheusBrazolin/financial-control-js/actions/workflows/ci.yml/badge.svg)](https://github.com/MatheusBrazolin/financial-control-js/actions/workflows/ci.yml)
+
 Aplicativo de finanças pessoais em **HTML, CSS e JavaScript puro** — sem framework, sem build, sem dependências. Os dados ficam no `localStorage` do próprio navegador; nada é enviado para servidor nenhum.
 
 🔗 **Demo:** https://controlefinanceiro-rouge.vercel.app
@@ -12,7 +14,9 @@ Aplicativo de finanças pessoais em **HTML, CSS e JavaScript puro** — sem fram
 - Entradas e saídas com descrição, valor, data e categoria — categorias separadas por tipo, para "Salário" não aparecer numa despesa
 - Edição, duplicação e exclusão, as duas últimas com **desfazer**
 - Transações recorrentes: o lançamento se repete sozinho nos meses seguintes, respeitando meses curtos (31/01 → 28/02), com fim opcional e botão para encerrar a série
-- Busca por descrição ou categoria, filtro por tipo e por categoria, ordenação por data ou valor
+- **Etiquetas** livres e **observação** em cada lançamento — clicar numa etiqueta filtra por ela em todos os meses
+- Busca por descrição, categoria, etiqueta ou observação; filtro por tipo, categoria e etiqueta; ordenação por data ou valor
+- Busca **em todos os meses**, não só no mês aberto
 - Total do que está filtrado no rodapé da tabela
 
 **Visão do mês**
@@ -23,7 +27,12 @@ Aplicativo de finanças pessoais em **HTML, CSS e JavaScript puro** — sem fram
 
 **Orçamentos**
 - Limite mensal por categoria, comparado só com o gasto **daquele mês**
+- O limite vale do mês em que foi definido em diante: mudar o teto hoje **não reescreve os meses já fechados**
 - Barra de progresso com alerta a partir de 80% e marcação de estouro
+
+**Metas**
+- Alvo, prazo opcional e registro dos aportes
+- Mostra quanto falta por mês até o prazo, se você está no ritmo e em que mês a meta fecha mantendo a média atual
 
 **Relatórios**
 - Entradas × saídas dos últimos 12 meses em gráfico de barras
@@ -59,7 +68,11 @@ As regras de negócio ficam isoladas em módulos puros (`src/domain/`), sem DOM 
 npm test
 ```
 
-São 54 testes cobrindo conversão de moeda, datas, recorrências (inclusive o fim da série e o mês curto), filtros, estatísticas, orçamentos, duplicação e exportação.
+São **94 testes** cobrindo conversão de moeda, datas, recorrências (inclusive o fim da série e o mês curto), filtros, etiquetas, estatísticas, orçamentos por mês, metas, duplicação e exportação.
+
+O `store` também é testado, com um dublê de `localStorage` que sabe simular cota cheia (`tests/store.test.js`) — é onde mora o risco de perder dados, então migração, recorrência e falha de gravação têm teste próprio.
+
+O CI roda tudo isso a cada push e pull request.
 
 ---
 
@@ -82,12 +95,14 @@ src/
     transactions.js        modelo, validação, recorrência, filtros
     stats.js               totais, indicadores, orçamentos, séries
     export.js              CSV e backup JSON
+    budgets.js             limites por mês, com herança
+    goals.js               metas, aportes e projeção
   ui/
     dom.js                 criação de nós (sem innerHTML)
     feedback.js            toasts e diálogos de confirmação
     charts.js              rosca e barras em canvas
     transaction-form.js    formulário modal de criar/editar
-    views/                 dashboard, transações, orçamentos, relatórios
+    views/                 dashboard, transações, orçamentos, metas, relatórios
 tests/                     node:test sobre src/domain
 ```
 
@@ -98,6 +113,8 @@ tests/                     node:test sobre src/domain
 - **Nada de `innerHTML` com dado do usuário.** Os nós são criados com `textContent`, então uma descrição com `<script>` entra como texto.
 - **Domínio separado da interface.** As funções que calculam não conhecem o DOM — por isso dá para testá-las sem navegador.
 - **Uma só fonte de verdade.** A UI nunca escreve no `localStorage`; só o `store` faz isso, e avisa quem precisa redesenhar.
+- **Orçamento é histórico, não configuração.** Os limites são guardados por mês (`{ "2026-11": { … } }`), com herança do mês definido mais recente. Um único limite por categoria faria mudar o teto hoje reescrever o passado.
+- **Falha de gravação é avisada.** Se o `localStorage` recusar a escrita no meio do uso, o app avisa na hora e sugere exportar um backup, em vez de deixar você lançar no vazio.
 
 ### Migração automática
 

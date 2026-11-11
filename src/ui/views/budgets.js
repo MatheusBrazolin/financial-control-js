@@ -2,6 +2,7 @@ import { el, $, render } from "../dom.js";
 import { formatMoney } from "../../domain/money.js";
 import { monthLabel } from "../../domain/dates.js";
 import { budgetStatus } from "../../domain/stats.js";
+import { budgetsFor } from "../../domain/budgets.js";
 import { EXPENSE_CATEGORIES, colorOf } from "../../domain/transactions.js";
 
 const STATUS_TEXT = {
@@ -11,8 +12,11 @@ const STATUS_TEXT = {
 };
 
 export function renderBudgets(state, handlers) {
-  const list = budgetStatus(state.transactions, state.budgets, state.month);
-  $("#budget-subtitle").textContent = monthLabel(state.month);
+  const limits = budgetsFor(state.budgets, state.month);
+  const list = budgetStatus(state.transactions, limits, state.month);
+  $("#budget-subtitle").textContent = `${monthLabel(
+    state.month
+  )} — o limite vale deste mês em diante`;
 
   // Orçamento é teto de gasto, então só categorias de saída entram aqui.
   // As que já têm limite continuam na lista: escolhê-las sobrescreve o valor.
@@ -23,7 +27,7 @@ export function renderBudgets(state, handlers) {
     ...EXPENSE_CATEGORIES.map((c) =>
       el("option", {
         value: c,
-        text: c in state.budgets ? `${c} (alterar)` : c,
+        text: c in limits ? `${c} (alterar)` : c,
       })
     ),
   ]);

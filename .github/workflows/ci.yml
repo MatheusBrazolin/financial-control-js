@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Testes
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # O projeto não tem dependências: não há npm ci a rodar.
+      - name: Rodar os testes
+        run: npm test
+
+      - name: Conferir a sintaxe de todos os módulos
+        run: |
+          find src scripts sw.js -name '*.js' -o -name '*.mjs' \
+            | xargs -n1 node --check
+
+      - name: Conferir que os ícones no repositório estão atualizados
+        run: |
+          npm run icons
+          # Só os PNGs gerados: o resto de assets/ é escrito à mão.
+          git diff --exit-code --stat -- 'assets/*.png' \
+            || (echo "::error::Os ícones estão fora de sincronia — rode 'npm run icons' e faça commit." && exit 1)

@@ -5,6 +5,7 @@ import {
   filterTransactions,
   sortTransactions,
   colorOf,
+  allTags,
 } from "../../domain/transactions.js";
 import { totals } from "../../domain/stats.js";
 
@@ -33,10 +34,12 @@ function applySort(list) {
 export function visibleTransactions(state) {
   return applySort(
     filterTransactions(state.transactions, {
-      month: state.month,
+      // Com "todos os meses" ligado, o mês deixa de limitar a busca.
+      month: state.filters.allMonths ? null : state.month,
       type: state.filters.type,
       query: state.filters.query,
       category: state.filters.category,
+      tag: state.filters.tag,
       onlyRecurring: state.filters.onlyRecurring,
     })
   );
@@ -47,7 +50,9 @@ function isFiltering(filters) {
     filters.query ||
       filters.type !== "all" ||
       filters.category !== "all" ||
-      filters.onlyRecurring
+      (filters.tag && filters.tag !== "all") ||
+      filters.onlyRecurring ||
+      filters.allMonths
   );
 }
 
@@ -78,7 +83,9 @@ export function renderTransactions(state, handlers) {
   const empty = $("#tx-empty");
 
   $("#result-count").textContent = rows.length
-    ? `${rows.length} ${rows.length > 1 ? "transações" : "transação"} em ${monthLabel(state.month)}`
+    ? `${rows.length} ${rows.length > 1 ? "transações" : "transação"} ${
+        state.filters.allMonths ? "em todos os meses" : `em ${monthLabel(state.month)}`
+      }`
     : "";
 
   for (const button of document.querySelectorAll(".table__sort")) {
@@ -152,6 +159,21 @@ export function renderTransactions(state, handlers) {
                 title: "Gerada automaticamente por uma recorrência",
                 text: "mensal",
               }),
+            ...(t.tags || []).map((tag) =>
+              el("button", {
+                class: "chip chip--tag chip--action",
+                type: "button",
+                title: `Filtrar por "${tag}"`,
+                text: `#${tag}`,
+                onClick: () => handlers.onTagClick(tag),
+              })
+            ),
+            t.note &&
+              el("span", {
+                class: "chip chip--note",
+                title: t.note,
+                text: "nota",
+              }),
           ]),
         ]),
         el("td", {}, [
@@ -220,4 +242,24 @@ export function renderCategoryFilter(state) {
   // nesse caso o filtro cai para "todas" em vez de esconder o mês inteiro.
   if (!used.includes(state.filters.category)) state.filters.category = "all";
   select.value = state.filters.category;
+}
+
+/** Preenche o seletor de etiquetas com as que existem (em todos os meses). */
+export function renderTagFilter(state) {
+  const select = $("#tag-filter");
+  const tags = allTags(state.transactions);
+
+  select.hidden = tags.length === 0;
+  render(select, [
+    el("option", { value: "all", text: "Todas as etiquetas" }),
+    ...tags.map(({ tag, count }) =>
+      el("option", { value: tag, text: `#${tag} (${count})` })
+    ),
+  ]);
+
+  const names = tags.map((t) => t.tag);
+  if (state.filters.tag && !names.includes(state.filters.tag)) {
+    state.filters.tag = "all";
+  }
+  select.value = state.filters.tag || "all";
 }

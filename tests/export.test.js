@@ -9,6 +9,8 @@ const tx = {
   category: "Alimentação",
   type: "expense",
   amount: 123456,
+  tags: ["casa", "feira"],
+  note: "sem a feira",
   recurring: false,
   seriesId: null,
 };
@@ -23,8 +25,14 @@ test("escapeCsv protege campos com separador, aspas e quebra de linha", () => {
 
 test("toCsv gera cabeçalho e linha no padrão brasileiro", () => {
   const [header, row] = toCsv([tx]).split("\r\n");
-  assert.equal(header, "Data;Descrição;Categoria;Tipo;Valor;Recorrente");
-  assert.equal(row, "07/03/2026;Mercado;Alimentação;Saída;1234,56;Não");
+  assert.equal(
+    header,
+    "Data;Descrição;Categoria;Tipo;Valor;Etiquetas;Observação;Recorrente"
+  );
+  assert.equal(
+    row,
+    "07/03/2026;Mercado;Alimentação;Saída;1234,56;casa, feira;sem a feira;Não"
+  );
 });
 
 test("toCsv não deixa uma descrição quebrar as colunas", () => {

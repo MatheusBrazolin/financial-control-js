@@ -9,7 +9,7 @@
  * Os dados do usuário NÃO passam por aqui — ficam no localStorage.
  */
 
-const VERSION = "v2.1.0";
+const VERSION = "v3.0.0";
 const CACHE = `controle-financeiro-${VERSION}`;
 
 const ASSETS = [
@@ -26,6 +26,8 @@ const ASSETS = [
   "./src/domain/dates.js",
   "./src/domain/transactions.js",
   "./src/domain/stats.js",
+  "./src/domain/budgets.js",
+  "./src/domain/goals.js",
   "./src/domain/export.js",
   "./src/ui/dom.js",
   "./src/ui/feedback.js",
@@ -34,6 +36,7 @@ const ASSETS = [
   "./src/ui/views/dashboard.js",
   "./src/ui/views/transactions.js",
   "./src/ui/views/budgets.js",
+  "./src/ui/views/goals.js",
   "./src/ui/views/reports.js",
 ];
 

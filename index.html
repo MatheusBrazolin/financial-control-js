@@ -48,6 +48,9 @@
           <a class="nav__link" href="#/orcamentos" data-view="orcamentos">
             <span class="nav__icon" aria-hidden="true">◎</span> Orçamentos
           </a>
+          <a class="nav__link" href="#/metas" data-view="metas">
+            <span class="nav__icon" aria-hidden="true">◆</span> Metas
+          </a>
           <a class="nav__link" href="#/relatorios" data-view="relatorios">
             <span class="nav__icon" aria-hidden="true">◪</span> Relatórios
           </a>
@@ -164,9 +167,15 @@
                   </div>
                   <label class="sr-only" for="category-filter">Filtrar por categoria</label>
                   <select class="filter-select" id="category-filter"></select>
+                  <label class="sr-only" for="tag-filter">Filtrar por etiqueta</label>
+                  <select class="filter-select" id="tag-filter"></select>
                   <label class="checkbox checkbox--inline">
                     <input type="checkbox" id="recurring-filter" />
                     <span>Só recorrentes</span>
+                  </label>
+                  <label class="checkbox checkbox--inline">
+                    <input type="checkbox" id="all-months-filter" />
+                    <span>Todos os meses</span>
                   </label>
                   <button class="btn btn--ghost" type="button" id="export-csv-btn">Exportar CSV</button>
                 </div>
@@ -225,6 +234,49 @@
 
               <div class="budget-grid" id="budget-grid"></div>
             </section>
+          </section>
+
+          <!-- ────────────────── METAS ────────────────── -->
+          <section class="view" data-view="metas" hidden>
+            <section class="card">
+              <header class="card__header">
+                <h2 class="card__title">Nova meta</h2>
+                <p class="card__subtitle">Quanto você quer juntar, e até quando</p>
+              </header>
+              <form class="goal-form" id="goal-form">
+                <div class="field">
+                  <label class="field__label" for="goal-name">Meta</label>
+                  <input
+                    class="field__input"
+                    id="goal-name"
+                    type="text"
+                    maxlength="60"
+                    autocomplete="off"
+                    placeholder="Reserva de emergência"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="goal-target">Quanto juntar</label>
+                  <input
+                    class="field__input"
+                    id="goal-target"
+                    type="text"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    placeholder="10.000,00"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="goal-deadline">Até (opcional)</label>
+                  <input class="field__input" id="goal-deadline" type="month" />
+                </div>
+                <button class="btn btn--primary" type="submit">Criar meta</button>
+              </form>
+            </section>
+
+            <div class="goal-grid" id="goal-grid"></div>
           </section>
 
           <!-- ──────────────── RELATÓRIOS ──────────────── -->
