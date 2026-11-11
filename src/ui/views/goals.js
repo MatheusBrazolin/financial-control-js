@@ -1,4 +1,5 @@
 import { el, $, render } from "../dom.js";
+import { icon } from "../icons.js";
 import { formatMoney } from "../../domain/money.js";
 import { formatDate, monthLabel, monthLabelShort } from "../../domain/dates.js";
 import { goalProgress, projectedMonth } from "../../domain/goals.js";
@@ -17,7 +18,7 @@ export function renderGoals(state, handlers) {
   if (!state.goals.length) {
     render(grid, [
       el("div", { class: "card empty" }, [
-        el("p", { class: "empty__icon", "aria-hidden": "true", text: "◆" }),
+        el("p", { class: "empty__icon", "aria-hidden": "true" }, [icon("flag", { size: 30 })]),
         el("p", { class: "empty__title", text: "Nenhuma meta ainda" }),
         el("p", {
           class: "empty__text",
@@ -50,9 +51,8 @@ export function renderGoals(state, handlers) {
             type: "button",
             "aria-label": `Excluir a meta ${goal.name}`,
             title: "Excluir meta",
-            text: "🗑",
             onClick: () => handlers.onRemove(goal),
-          }),
+          }, [icon("trash", { size: 17 })]),
         ]),
 
         el("div", {
@@ -104,9 +104,8 @@ export function renderGoals(state, handlers) {
                         type: "button",
                         "aria-label": `Remover o aporte de ${formatDate(c.date)}`,
                         title: "Remover aporte",
-                        text: "×",
                         onClick: () => handlers.onRemoveContribution(goal, c),
-                      }),
+                      }, [icon("x", { size: 14 })]),
                     ])
                   )
               ),
@@ -118,7 +117,7 @@ export function renderGoals(state, handlers) {
 }
 
 function hint(progress, projection) {
-  if (progress.done) return "Meta alcançada. 🎉";
+  if (progress.done) return "Meta alcançada.";
 
   if (progress.status === "late") {
     return `Faltam ${formatMoney(progress.remaining)} e o prazo já passou.`;

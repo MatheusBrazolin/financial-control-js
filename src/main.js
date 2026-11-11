@@ -8,6 +8,7 @@ import { $, $$ } from "./ui/dom.js";
 import { toast, confirmDialog, promptDialog } from "./ui/feedback.js";
 import { openTransactionForm } from "./ui/transaction-form.js";
 import { autoRedraw } from "./ui/charts.js";
+import { hydrateIcons } from "./ui/icons.js";
 import { renderDashboard } from "./ui/views/dashboard.js";
 import {
   renderTransactions,
@@ -188,6 +189,37 @@ function tagNames() {
 }
 
 // ─────────────────────────── metas ───────────────────────────────
+async function createGoal() {
+  const values = await promptDialog({
+    title: "Nova meta",
+    message: "O app calcula sozinho quanto falta guardar por mês até o prazo.",
+    confirmLabel: "Criar meta",
+    fields: [
+      { name: "name", label: "Meta", placeholder: "Reserva de emergência" },
+      {
+        name: "target",
+        label: "Quanto juntar",
+        inputMode: "decimal",
+        placeholder: "10.000,00",
+      },
+      { name: "deadline", label: "Até (opcional)", type: "month" },
+    ],
+    validate: ({ name, target, deadline }) => {
+      const data = {
+        name,
+        target: parseAmount(target),
+        deadline: deadline || null,
+      };
+      const { valid, errors } = validateGoal(data);
+      return { valid, errors, values: data };
+    },
+  });
+  if (!values) return;
+
+  store.addGoal(values);
+  toast(`Meta "${values.name.trim()}" criada.`, { type: "success" });
+}
+
 async function removeGoal(goal) {
   const ok = await confirmDialog({
     title: "Excluir meta?",
@@ -453,22 +485,7 @@ function bindEvents() {
     store.setFilters({ tag: event.target.value })
   );
 
-  $("#goal-form").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const data = {
-      name: $("#goal-name").value,
-      target: parseAmount($("#goal-target").value),
-      deadline: $("#goal-deadline").value || null,
-    };
-    const { valid, errors } = validateGoal(data);
-    if (!valid) {
-      toast(Object.values(errors)[0], { type: "error" });
-      return;
-    }
-    store.addGoal(data);
-    event.target.reset();
-    toast(`Meta "${data.name.trim()}" criada.`, { type: "success" });
-  });
+  $("#new-goal-btn").addEventListener("click", createGoal);
 
   for (const button of $$(".table__sort")) {
     button.addEventListener("click", () => {
@@ -609,6 +626,7 @@ function start() {
   $("#compare-a").value = addMonths(now, -1);
   $("#compare-b").value = now;
 
+  hydrateIcons();
   bindEvents();
   registerServiceWorker();
   store.subscribe(renderActiveView);

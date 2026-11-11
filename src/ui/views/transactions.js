@@ -1,4 +1,5 @@
 import { el, $, render } from "../dom.js";
+import { icon } from "../icons.js";
 import { formatMoney } from "../../domain/money.js";
 import { formatDate, monthLabel, monthLabelShort } from "../../domain/dates.js";
 import {
@@ -103,7 +104,7 @@ export function renderTransactions(state, handlers) {
     empty.hidden = false;
     const filtering = isFiltering(state.filters);
     render(empty, [
-      el("p", { class: "empty__icon", "aria-hidden": "true", text: "🗂️" }),
+      el("p", { class: "empty__icon", "aria-hidden": "true" }, [icon("inbox", { size: 30 })]),
       el("p", {
         class: "empty__title",
         text: filtering
@@ -172,8 +173,8 @@ export function renderTransactions(state, handlers) {
               el("span", {
                 class: "chip chip--note",
                 title: t.note,
-                text: "nota",
-              }),
+                "aria-label": `Observação: ${t.note}`,
+              }, [icon("note", { size: 13 })]),
           ]),
         ]),
         el("td", {}, [
@@ -195,25 +196,22 @@ export function renderTransactions(state, handlers) {
             type: "button",
             "aria-label": `Editar ${t.description}`,
             title: "Editar",
-            text: "✎",
             onClick: () => handlers.onEdit(t),
-          }),
+          }, [icon("pencil", { size: 17 })]),
           el("button", {
             class: "icon-btn",
             type: "button",
             "aria-label": `Duplicar ${t.description}`,
             title: "Duplicar",
-            text: "⧉",
             onClick: () => handlers.onDuplicate(t),
-          }),
+          }, [icon("copy", { size: 17 })]),
           el("button", {
             class: "icon-btn icon-btn--danger",
             type: "button",
             "aria-label": `Excluir ${t.description}`,
             title: "Excluir",
-            text: "🗑",
             onClick: () => handlers.onDelete(t),
-          }),
+          }, [icon("trash", { size: 17 })]),
         ]),
       ])
     )

@@ -34,37 +34,42 @@
       <!-- ───────────────────────── SIDEBAR ───────────────────────── -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar__brand">
-          <span class="sidebar__logo" aria-hidden="true">💰</span>
-          <span class="sidebar__name">Controle<strong>Financeiro</strong></span>
+          <span class="sidebar__logo" aria-hidden="true" data-icon="wallet"></span>
+          <span class="sidebar__name">Controle <strong>Financeiro</strong></span>
         </div>
 
         <nav class="nav" aria-label="Seções">
           <a class="nav__link is-active" href="#/dashboard" data-view="dashboard">
-            <span class="nav__icon" aria-hidden="true">◧</span> Dashboard
+            <span class="nav__icon" aria-hidden="true" data-icon="dashboard"></span>
+            <span>Dashboard</span>
           </a>
           <a class="nav__link" href="#/transacoes" data-view="transacoes">
-            <span class="nav__icon" aria-hidden="true">≡</span> Transações
+            <span class="nav__icon" aria-hidden="true" data-icon="list"></span>
+            <span>Transações</span>
           </a>
           <a class="nav__link" href="#/orcamentos" data-view="orcamentos">
-            <span class="nav__icon" aria-hidden="true">◎</span> Orçamentos
+            <span class="nav__icon" aria-hidden="true" data-icon="target"></span>
+            <span>Orçamentos</span>
           </a>
           <a class="nav__link" href="#/metas" data-view="metas">
-            <span class="nav__icon" aria-hidden="true">◆</span> Metas
+            <span class="nav__icon" aria-hidden="true" data-icon="flag"></span>
+            <span>Metas</span>
           </a>
           <a class="nav__link" href="#/relatorios" data-view="relatorios">
-            <span class="nav__icon" aria-hidden="true">◪</span> Relatórios
+            <span class="nav__icon" aria-hidden="true" data-icon="chart"></span>
+            <span>Relatórios</span>
           </a>
         </nav>
 
         <div class="sidebar__footer">
           <button class="side-action" type="button" id="import-btn">
-            <span aria-hidden="true">↥</span> Importar backup
+            <span aria-hidden="true" data-icon="upload"></span> Importar backup
           </button>
           <button class="side-action" type="button" id="export-json-btn">
-            <span aria-hidden="true">↧</span> Exportar backup
+            <span aria-hidden="true" data-icon="download"></span> Exportar backup
           </button>
           <button class="side-action side-action--danger" type="button" id="reset-btn">
-            <span aria-hidden="true">⌫</span> Apagar tudo
+            <span aria-hidden="true" data-icon="trash"></span> Apagar tudo
           </button>
           <input type="file" id="import-input" accept="application/json,.json" hidden />
           <p class="sidebar__note">
@@ -83,34 +88,29 @@
             aria-label="Abrir menu"
             aria-expanded="false"
             aria-controls="sidebar"
-          >
-            ☰
-          </button>
+            data-icon="menu"
+          ></button>
 
           <h1 class="topbar__title" id="view-title">Dashboard</h1>
 
           <div class="topbar__actions">
             <div class="month-picker">
-              <button class="icon-btn" type="button" id="month-prev" aria-label="Mês anterior">‹</button>
+              <button class="icon-btn" type="button" id="month-prev" aria-label="Mês anterior" data-icon="chevronLeft"></button>
               <label class="sr-only" for="month-input">Mês de referência</label>
               <input class="month-picker__input" type="month" id="month-input" />
-              <button class="icon-btn" type="button" id="month-next" aria-label="Próximo mês">›</button>
+              <button class="icon-btn" type="button" id="month-next" aria-label="Próximo mês" data-icon="chevronRight"></button>
             </div>
 
             <button class="btn btn--ghost btn--small" type="button" id="month-today" hidden>
               Hoje
             </button>
 
-            <button class="icon-btn" type="button" id="help-btn" aria-label="Atalhos de teclado" title="Atalhos (?)">
-              <span aria-hidden="true">?</span>
-            </button>
+            <button class="icon-btn" type="button" id="help-btn" aria-label="Atalhos de teclado" title="Atalhos (?)" data-icon="help"></button>
 
-            <button class="icon-btn" type="button" id="theme-btn" aria-label="Alternar tema" title="Alternar tema (Ctrl/⌘ + J)">
-              <span aria-hidden="true">◐</span>
-            </button>
+            <button class="icon-btn" type="button" id="theme-btn" aria-label="Alternar tema" title="Alternar tema (Ctrl/⌘ + J)" data-icon="moon"></button>
 
             <button class="btn btn--primary" type="button" id="new-tx-btn" title="Nova transação (N)">
-              <span aria-hidden="true">+</span>
+              <span aria-hidden="true" data-icon="plus"></span>
               <span class="btn__label">Nova transação</span>
             </button>
           </div>
@@ -169,15 +169,20 @@
                   <select class="filter-select" id="category-filter"></select>
                   <label class="sr-only" for="tag-filter">Filtrar por etiqueta</label>
                   <select class="filter-select" id="tag-filter"></select>
-                  <label class="checkbox checkbox--inline">
-                    <input type="checkbox" id="recurring-filter" />
-                    <span>Só recorrentes</span>
-                  </label>
-                  <label class="checkbox checkbox--inline">
-                    <input type="checkbox" id="all-months-filter" />
-                    <span>Todos os meses</span>
-                  </label>
-                  <button class="btn btn--ghost" type="button" id="export-csv-btn">Exportar CSV</button>
+                  <div class="toolbar__end">
+                    <label class="checkbox checkbox--inline">
+                      <input type="checkbox" id="recurring-filter" />
+                      <span>Só recorrentes</span>
+                    </label>
+                    <label class="checkbox checkbox--inline">
+                      <input type="checkbox" id="all-months-filter" />
+                      <span>Todos os meses</span>
+                    </label>
+                    <button class="btn btn--ghost btn--small" type="button" id="export-csv-btn">
+                      <span aria-hidden="true" data-icon="download" data-icon-size="16"></span>
+                      Exportar CSV
+                    </button>
+                  </div>
                 </div>
               </header>
 
@@ -238,43 +243,18 @@
 
           <!-- ────────────────── METAS ────────────────── -->
           <section class="view" data-view="metas" hidden>
-            <section class="card">
-              <header class="card__header">
-                <h2 class="card__title">Nova meta</h2>
-                <p class="card__subtitle">Quanto você quer juntar, e até quando</p>
-              </header>
-              <form class="goal-form" id="goal-form">
-                <div class="field">
-                  <label class="field__label" for="goal-name">Meta</label>
-                  <input
-                    class="field__input"
-                    id="goal-name"
-                    type="text"
-                    maxlength="60"
-                    autocomplete="off"
-                    placeholder="Reserva de emergência"
-                    required
-                  />
-                </div>
-                <div class="field">
-                  <label class="field__label" for="goal-target">Quanto juntar</label>
-                  <input
-                    class="field__input"
-                    id="goal-target"
-                    type="text"
-                    inputmode="decimal"
-                    autocomplete="off"
-                    placeholder="10.000,00"
-                    required
-                  />
-                </div>
-                <div class="field">
-                  <label class="field__label" for="goal-deadline">Até (opcional)</label>
-                  <input class="field__input" id="goal-deadline" type="month" />
-                </div>
-                <button class="btn btn--primary" type="submit">Criar meta</button>
-              </form>
-            </section>
+            <header class="view__header">
+              <div>
+                <h2 class="view__title">Suas metas</h2>
+                <p class="view__subtitle">
+                  Quanto você quer juntar, até quando, e o quanto falta por mês.
+                </p>
+              </div>
+              <button class="btn btn--primary" type="button" id="new-goal-btn">
+                <span aria-hidden="true" data-icon="plus"></span>
+                Nova meta
+              </button>
+            </header>
 
             <div class="goal-grid" id="goal-grid"></div>
           </section>

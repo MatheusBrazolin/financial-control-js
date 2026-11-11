@@ -1,6 +1,7 @@
 /** Toasts e diálogos — substituem `alert()` e `confirm()` do navegador. */
 
 import { el } from "./dom.js";
+import { icon } from "./icons.js";
 
 const container = el("div", {
   class: "toast-stack",
@@ -32,9 +33,8 @@ export function toast(message, options = {}) {
       class: "toast__close",
       type: "button",
       "aria-label": "Fechar aviso",
-      text: "×",
       onClick: () => dismiss(),
-    }),
+    }, [icon("x", { size: 15 })]),
   ]);
 
   let timer = setTimeout(dismiss, duration);
@@ -179,9 +179,8 @@ export function promptDialog({ title, message, fields, confirmLabel = "Salvar", 
             type: "button",
             class: "icon-btn",
             "aria-label": "Fechar",
-            text: "×",
             onClick: () => finish(null),
-          }),
+          }, [icon("x", { size: 17 })]),
         ]),
         form,
       ]),

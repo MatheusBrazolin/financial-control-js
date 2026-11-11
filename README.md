@@ -45,6 +45,8 @@ Aplicativo de finanças pessoais em **HTML, CSS e JavaScript puro** — sem fram
 - **Instalável e offline**: service worker + manifesto, funciona sem internet e abre como app no celular e no desktop
 - Tema claro/escuro, seguindo a preferência do sistema na primeira visita
 - Layout responsivo: no celular a tabela vira lista de cartões
+- Conjunto de ícones próprio em SVG inline (`src/ui/icons.js`), sem emoji e sem biblioteca
+- Tipografia Inter hospedada no projeto — nenhuma requisição sai para terceiros, e o offline continua valendo
 - Navegação por teclado, foco visível, rótulos e `aria-*` nos componentes
 - Atalhos (`?` mostra a lista): `N` nova transação · `/` buscar · `←` `→` trocar de mês · `Ctrl`/`⌘ + J` alternar tema
 
@@ -82,7 +84,8 @@ O CI roda tudo isso a cada push e pull request.
 index.html                 markup semântico das quatro telas
 manifest.webmanifest       instalação como app
 sw.js                      cache offline (nunca toca nos seus dados)
-assets/css/styles.css      tokens de tema, componentes e responsivo
+assets/css/styles.css      tokens de tema, escala tipográfica, componentes
+assets/fonts/              Inter (SIL OFL 1.1), ver fonts/README.md
 assets/icon*.png|svg       ícones, gerados por npm run icons
 scripts/serve.mjs          servidor estático de desenvolvimento
 scripts/build-icons.mjs    gera os PNGs do manifesto (PNG escrito na mão)
@@ -99,6 +102,7 @@ src/
     goals.js               metas, aportes e projeção
   ui/
     dom.js                 criação de nós (sem innerHTML)
+    icons.js               ícones SVG, na mesma grade e traço
     feedback.js            toasts e diálogos de confirmação
     charts.js              rosca e barras em canvas
     transaction-form.js    formulário modal de criar/editar

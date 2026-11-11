@@ -4,6 +4,21 @@
    responsivo. Tema claro/escuro por [data-theme] no <html>.
    ============================================================ */
 
+/* ───────────────────────────── fonte ────────────────────────── */
+/* Inter (SIL OFL 1.1), hospedada no próprio projeto para o app seguir
+   funcionando offline e não fazer o usuário pedir nada a terceiros.
+   Ver assets/fonts/README.md. */
+@font-face {
+  font-family: "Inter var";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/inter-variable-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+    U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC,
+    U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* ───────────────────────────── tokens ───────────────────────── */
 :root {
   --brand: #4f46e5;
@@ -32,9 +47,21 @@
 
   --space: 20px;
   --sidebar-w: 248px;
-  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  --font: "Inter var", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+
+  /* Escala tipográfica: cada passo tem tamanho, peso e espaçamento
+     próprios, em vez de cada tela escolher um valor solto. */
+  --text-xs: 11.5px;
+  --text-sm: 13px;
+  --text-base: 14.5px;
+  --text-md: 16px;
+  --text-lg: 19px;
+  --text-xl: 24px;
+  --text-2xl: 30px;
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.06em;
 }
 
 [data-theme="dark"] {
@@ -77,9 +104,27 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
-  font-size: 15px;
+  font-size: var(--text-base);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* cv11: "a" e "g" de desenho simples, mais legíveis em tamanho pequeno. */
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Ícones se comportam como tipografia: herdam cor e acompanham o texto. */
+.icon {
+  display: block;
+  flex: none;
+  color: currentColor;
+}
+.icon-wrap {
+  display: inline-flex;
+}
+button .icon,
+a .icon,
+label .icon {
+  pointer-events: none;
 }
 
 button,
@@ -205,18 +250,30 @@ canvas {
 .sidebar__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 8px;
+  gap: 11px;
+  padding: 6px 8px 2px;
 }
 .sidebar__logo {
-  font-size: 24px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
 }
 .sidebar__name {
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  color: var(--text-soft);
+  display: flex;
+  flex-direction: column;
+  font-size: var(--text-sm);
+  line-height: 1.25;
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-muted);
 }
 .sidebar__name strong {
+  font-size: var(--text-md);
+  font-weight: 650;
   color: var(--text);
 }
 
@@ -226,12 +283,14 @@ canvas {
   gap: 2px;
 }
 .nav__link {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
+  gap: 11px;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
   color: var(--text-soft);
+  font-size: var(--text-base);
   font-weight: 500;
   transition: background 0.15s, color 0.15s;
 }
@@ -245,10 +304,22 @@ canvas {
   color: var(--brand);
   font-weight: 600;
 }
+/* Marcador fino à esquerda: diz qual tela está aberta sem depender só
+   da cor, que alguns olhos não distinguem. */
+.nav__link.is-active::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 0 3px 3px 0;
+  background: var(--brand);
+}
 .nav__icon {
-  font-size: 15px;
-  width: 18px;
-  text-align: center;
+  display: inline-flex;
+  opacity: 0.9;
 }
 
 .sidebar__footer {
@@ -262,13 +333,18 @@ canvas {
 .side-action {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
   padding: 9px 12px;
   border-radius: var(--radius-sm);
-  color: var(--text-soft);
-  font-size: 13.5px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
   text-align: left;
   transition: background 0.15s, color 0.15s;
+}
+.side-action [data-icon],
+.side-action .icon-wrap {
+  display: inline-flex;
+  opacity: 0.85;
 }
 .side-action:hover {
   background: var(--surface-2);
@@ -303,9 +379,9 @@ canvas {
   border-bottom: 1px solid var(--border);
 }
 .topbar__title {
-  font-size: 19px;
+  font-size: var(--text-lg);
   font-weight: 650;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
 }
 .topbar__actions {
   margin-left: auto;
@@ -389,14 +465,16 @@ canvas {
   align-items: center;
 }
 .card__title {
-  font-size: 15.5px;
+  font-size: var(--text-md);
   font-weight: 650;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
+  white-space: nowrap;
 }
 .card__subtitle,
 .card__link {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
+  text-align: right;
 }
 .card__link {
   color: var(--brand);
@@ -407,9 +485,9 @@ canvas {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding: 9px 16px;
+  padding: 9px 15px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: var(--text-base);
   font-weight: 550;
   white-space: nowrap;
   transition: background 0.15s, border-color 0.15s, transform 0.08s;
@@ -454,8 +532,7 @@ canvas {
   width: 32px;
   height: 32px;
   border-radius: var(--radius-sm);
-  color: var(--text-soft);
-  font-size: 15px;
+  color: var(--text-muted);
   line-height: 1;
   transition: background 0.15s, color 0.15s;
 }
@@ -502,10 +579,10 @@ canvas {
   text-decoration: line-through;
 }
 .chip--tag {
-  background: transparent;
-  border-style: dashed;
-  color: var(--text-muted);
-  font-size: 11px;
+  background: var(--surface-2);
+  border-color: transparent;
+  color: var(--text-soft);
+  font-size: var(--text-xs);
   padding: 1px 8px;
 }
 .chip--tag:hover {
@@ -514,10 +591,14 @@ canvas {
   color: var(--brand);
 }
 .chip--note {
-  background: transparent;
+  display: inline-grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  padding: 0;
   border-style: dotted;
-  font-size: 11px;
-  padding: 1px 8px;
+  background: transparent;
+  color: var(--text-muted);
   cursor: help;
 }
 
@@ -640,50 +721,61 @@ select.field__input {
 /* ───────────────────────── telas: dashboard ─────────────────── */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 14px;
 }
 .stat {
-  position: relative;
-  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 18px 18px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
 }
-.stat::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--text-muted);
-}
-.stat--income::before {
-  background: var(--income);
-}
-.stat--expense::before {
-  background: var(--expense);
-}
-.stat--balance::before {
-  background: var(--brand);
-}
-.stat--negative::before {
-  background: var(--warning);
+.stat__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 .stat__label {
-  font-size: 12.5px;
-  font-weight: 550;
+  font-size: var(--text-xs);
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-wide);
+}
+.stat__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.stat--income .stat__icon {
+  background: color-mix(in srgb, var(--income) 14%, transparent);
+  color: var(--income);
+}
+.stat--expense .stat__icon {
+  background: color-mix(in srgb, var(--expense) 14%, transparent);
+  color: var(--expense);
+}
+.stat--balance .stat__icon,
+.stat--negative .stat__icon {
+  background: color-mix(in srgb, var(--brand) 16%, transparent);
+  color: var(--brand);
 }
 .stat__value {
-  margin: 6px 0 2px;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: var(--text-xl);
+  font-weight: 680;
+  letter-spacing: var(--tracking-tight);
   font-variant-numeric: tabular-nums;
+  line-height: 1.15;
 }
 .stat--income .stat__value {
   color: var(--income);
@@ -695,34 +787,72 @@ select.field__input {
   color: var(--warning);
 }
 .stat__footer {
-  font-size: 12.5px;
+  margin-top: 3px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
+}
+
+/* O saldo é a resposta à pergunta do usuário, então pesa mais que os
+   outros dois: fundo próprio, número maior e borda de destaque. */
+.stat--hero {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--brand) 10%, var(--surface)),
+    var(--surface) 70%
+  );
+  border-color: color-mix(in srgb, var(--brand) 28%, var(--border));
+}
+.stat--hero .stat__value {
+  font-size: var(--text-2xl);
 }
 
 .insight-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 14px;
 }
 .insight {
-  padding: 15px 17px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  transition: border-color 0.15s;
+}
+.insight:hover {
+  border-color: var(--border-strong);
+}
+.insight__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+.insight__body {
+  min-width: 0;
 }
 .insight__label {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 .insight__value {
-  margin: 3px 0;
-  font-size: 17px;
+  margin: 1px 0 2px;
+  font-size: var(--text-md);
   font-weight: 650;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
   font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .insight__detail {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -770,7 +900,7 @@ select.field__input {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
+  font-size: var(--text-sm);
   color: var(--text-soft);
 }
 .legend__dot {
@@ -779,8 +909,50 @@ select.field__input {
   border-radius: 3px;
   flex: none;
 }
-.legend__value {
+
+/* Legenda do gráfico de categorias: uma linha por categoria, com os
+   valores alinhados numa coluna — antes era um bloco de texto corrido,
+   impossível de comparar de bater o olho. */
+#category-legend {
+  display: grid;
+  gap: 7px;
+  margin-top: 18px;
+}
+.legend__row {
+  display: grid;
+  grid-template-columns: 9px minmax(70px, auto) minmax(40px, 1fr) 34px auto;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-sm);
+}
+.legend__label {
+  color: var(--text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.legend__track {
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.legend__bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  opacity: 0.85;
+}
+.legend__pct {
+  text-align: right;
+  font-size: var(--text-xs);
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.legend__value {
+  text-align: right;
+  color: var(--text);
+  font-weight: 550;
   font-variant-numeric: tabular-nums;
 }
 
@@ -838,7 +1010,16 @@ select.field__input {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
+}
+/* Os filtros ficam à esquerda e as opções com o exportar à direita.
+   Agrupados, eles quebram juntos em telas estreitas, em vez de deixar
+   um controle solto numa linha só dele. */
+.toolbar__end {
+  display: flex;
+  align-items: center;
+  gap: 8px 14px;
+  margin-left: auto;
 }
 .search__input {
   width: clamp(180px, 28vw, 280px);
@@ -888,7 +1069,7 @@ select.field__input {
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--text-base);
 }
 .table th {
   padding: 8px 12px;
@@ -951,6 +1132,12 @@ select.field__input {
   display: flex;
   gap: 2px;
   justify-content: flex-end;
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+.table__row:hover .table__actions,
+.table__actions:focus-within {
+  opacity: 1;
 }
 .table__empty {
   padding: 28px 12px;
@@ -988,15 +1175,22 @@ select.field__input {
   text-align: center;
 }
 .empty__icon {
-  font-size: 34px;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  color: var(--text-muted);
 }
 .empty__title {
-  font-size: 15px;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 .empty__text {
-  max-width: 340px;
-  font-size: 13.5px;
+  max-width: 360px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 .empty .btn {
@@ -1058,8 +1252,8 @@ select.field__input {
   background: var(--expense);
 }
 .budget__numbers {
-  margin-top: 10px;
-  font-size: 14px;
+  margin-top: 12px;
+  font-size: var(--text-base);
   font-variant-numeric: tabular-nums;
 }
 .budget__numbers span {
@@ -1068,14 +1262,21 @@ select.field__input {
 .budget__status {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 2px;
-  font-size: 12.5px;
+  gap: 7px;
+  margin-top: 4px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
+  white-space: nowrap;
 }
 .budget__percent {
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: var(--text-xs);
   font-weight: 650;
   color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
 }
 .budget--over .budget__percent {
   color: var(--expense);
@@ -1094,11 +1295,22 @@ select.field__input {
 }
 
 /* ────────────────────────── telas: metas ────────────────────── */
-.goal-form {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 12px;
+.view__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.view__title {
+  font-size: var(--text-lg);
+  font-weight: 650;
+  letter-spacing: var(--tracking-tight);
+}
+.view__subtitle {
+  margin-top: 2px;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
 }
 
 .goal-grid {
@@ -1483,9 +1695,11 @@ select.field__input {
   }
 
   .budget-form,
-  .compare-form,
-  .goal-form {
+  .compare-form {
     grid-template-columns: 1fr;
+  }
+  .view__header {
+    align-items: stretch;
   }
   .goal-grid {
     grid-template-columns: 1fr;

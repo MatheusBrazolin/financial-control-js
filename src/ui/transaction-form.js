@@ -7,6 +7,7 @@
  */
 
 import { el, $, $$, render } from "./dom.js";
+import { icon } from "./icons.js";
 import { parseAmount, formatMoney } from "../domain/money.js";
 import { todayISO } from "../domain/dates.js";
 import { categoriesFor, validate, parseTags } from "../domain/transactions.js";
@@ -144,9 +145,8 @@ function build() {
           type: "button",
           class: "icon-btn",
           "aria-label": "Fechar",
-          text: "×",
           onClick: () => close(null),
-        }),
+        }, [icon("x", { size: 17 })]),
       ]),
       form,
     ]),
