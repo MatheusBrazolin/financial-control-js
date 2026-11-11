@@ -1,266 +1,280 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Controle Financeiro</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta
+      name="description"
+      content="Controle financeiro pessoal: entradas, saídas, orçamentos por categoria e relatórios — em HTML, CSS e JavaScript puro, com os dados guardados só no seu navegador."
+    />
+    <title>Controle Financeiro</title>
 
-  <div class="app-wrapper">
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="logo">💰</div>
-        <h1>Finance</h1>
-      </div>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B0%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="assets/css/styles.css" />
 
-      <nav class="sidebar-nav">
-        <button class="nav-link active" data-tab="dashboard">📊 Dashboard</button>
-        <button class="nav-link" data-tab="transacoes">📝 Transações</button>
-        <button class="nav-link" data-tab="orcamento">🎯 Orçamentos</button>
-        <button class="nav-link" data-tab="relatorio">📈 Relatórios</button>
-      </nav>
+    <script>
+      // Antes da primeira pintura, para a tela não piscar branca em modo escuro.
+      try {
+        const saved = localStorage.getItem("fc:theme");
+        const prefersDark = matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme =
+          saved || (prefersDark ? "dark" : "light");
+      } catch {}
+    </script>
+  </head>
 
-      <div class="sidebar-footer">
-        <button id="theme-toggle" class="theme-btn" title="Ctrl+D" style="opacity: 0.3; font-size: 0.8rem;">◐</button>
-      </div>
-    </aside>
+  <body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
-    <!-- MAIN -->
-    <main class="main-content">
-      <header class="top-bar">
-        <h2 id="page-title">Dashboard</h2>
-        <button id="export-csv" class="btn-icon">📥</button>
-      </header>
-
-      <!-- TAB: DASHBOARD -->
-      <div class="tab-content active" data-tab="dashboard">
-        <!-- INSIGHTS -->
-        <section class="dashboard-grid">
-          <div class="stat-card income">
-            <div class="stat-header">
-              <span class="stat-label">Entradas</span>
-              <span class="stat-icon">↑</span>
-            </div>
-            <div class="stat-value" data-income>R$ 0,00</div>
-            <div class="stat-footer" id="insight-income">Este mês</div>
-          </div>
-
-          <div class="stat-card expense">
-            <div class="stat-header">
-              <span class="stat-label">Saídas</span>
-              <span class="stat-icon">↓</span>
-            </div>
-            <div class="stat-value" data-expense>R$ 0,00</div>
-            <div class="stat-footer" id="insight-expense">Este mês</div>
-          </div>
-
-          <div class="stat-card balance">
-            <div class="stat-header">
-              <span class="stat-label">Saldo</span>
-              <span class="stat-icon">⚖️</span>
-            </div>
-            <div class="stat-value" data-balance>R$ 0,00</div>
-            <div class="stat-footer">Disponível</div>
-          </div>
-        </section>
-
-        <!-- INSIGHTS ROW -->
-        <div class="insights-grid">
-          <div class="insight-card">
-            <div class="insight-label">Maior Gasto</div>
-            <div class="insight-value" id="maior-gasto">-</div>
-            <div class="insight-detail" id="maior-gasto-cat">-</div>
-          </div>
-
-          <div class="insight-card">
-            <div class="insight-label">Categoria Top</div>
-            <div class="insight-value" id="categoria-top">-</div>
-            <div class="insight-detail" id="categoria-top-valor">-</div>
-          </div>
-
-          <div class="insight-card">
-            <div class="insight-label">Média Diária</div>
-            <div class="insight-value" id="media-diaria">-</div>
-            <div class="insight-detail" id="dias-restantes">-</div>
-          </div>
-
-          <div class="insight-card">
-            <div class="insight-label">Vs Mês Anterior</div>
-            <div class="insight-value" id="comparativo-anterior">-</div>
-            <div class="insight-detail" id="comparativo-percent">-</div>
-          </div>
+    <div class="layout">
+      <!-- ───────────────────────── SIDEBAR ───────────────────────── -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar__brand">
+          <span class="sidebar__logo" aria-hidden="true">💰</span>
+          <span class="sidebar__name">Controle<strong>Financeiro</strong></span>
         </div>
 
-        <!-- MAIN GRID -->
-        <div class="content-grid">
-          <!-- LEFT: FORM -->
-          <section class="card form-card">
-            <h3>Nova Transação</h3>
-            <form class="transaction-form" id="transaction-form">
-              <div class="form-group">
-                <label>Descrição</label>
-                <input type="text" placeholder="O que você gastou ou recebeu?" class="form-input" data-field="descricao" required />
-                <span class="form-error" data-error="descricao"></span>
-              </div>
+        <nav class="nav" aria-label="Seções">
+          <a class="nav__link is-active" href="#/dashboard" data-view="dashboard">
+            <span class="nav__icon" aria-hidden="true">◧</span> Dashboard
+          </a>
+          <a class="nav__link" href="#/transacoes" data-view="transacoes">
+            <span class="nav__icon" aria-hidden="true">≡</span> Transações
+          </a>
+          <a class="nav__link" href="#/orcamentos" data-view="orcamentos">
+            <span class="nav__icon" aria-hidden="true">◎</span> Orçamentos
+          </a>
+          <a class="nav__link" href="#/relatorios" data-view="relatorios">
+            <span class="nav__icon" aria-hidden="true">◪</span> Relatórios
+          </a>
+        </nav>
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Valor</label>
-                  <input type="text" placeholder="0,00" class="form-input" data-field="valor" id="valor-input" required />
-                  <span class="form-error" data-error="valor"></span>
-                </div>
-
-                <div class="form-group">
-                  <label>Categoria</label>
-                  <select class="form-input" data-field="categoria" required>
-                    <option value="">Selecionar</option>
-                    <option>Alimentação</option>
-                    <option>Transporte</option>
-                    <option>Moradia</option>
-                    <option>Saúde</option>
-                    <option>Lazer</option>
-                    <option>Educação</option>
-                    <option>Outros</option>
-                  </select>
-                  <span class="form-error" data-error="categoria"></span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label style="display: flex; gap: 8px; font-weight: normal;">
-                  <input type="checkbox" id="recorrente-check" />
-                  <span>Transação recorrente (mensal)</span>
-                </label>
-              </div>
-
-              <div class="form-actions">
-                <button type="button" class="btn btn-success" data-type="entrada">+ Entrada</button>
-                <button type="button" class="btn btn-danger" data-type="saida">- Saída</button>
-              </div>
-            </form>
-          </section>
-
-          <!-- RIGHT: CHART -->
-          <section class="card chart-card">
-            <h3>Gastos por Categoria</h3>
-            <div class="chart-container">
-              <canvas id="category-chart" width="280" height="280"></canvas>
-            </div>
-          </section>
+        <div class="sidebar__footer">
+          <button class="side-action" type="button" id="import-btn">
+            <span aria-hidden="true">↥</span> Importar backup
+          </button>
+          <button class="side-action" type="button" id="export-json-btn">
+            <span aria-hidden="true">↧</span> Exportar backup
+          </button>
+          <button class="side-action side-action--danger" type="button" id="reset-btn">
+            <span aria-hidden="true">⌫</span> Apagar tudo
+          </button>
+          <input type="file" id="import-input" accept="application/json,.json" hidden />
+          <p class="sidebar__note">
+            Os dados ficam apenas neste navegador.
+          </p>
         </div>
-      </div>
+      </aside>
 
-      <!-- TAB: TRANSAÇÕES -->
-      <div class="tab-content" data-tab="transacoes">
-        <section class="card">
-          <div class="section-header">
-            <h3>Transações</h3>
-            <div class="section-controls">
-              <input type="month" id="month-filter" class="filter-input" />
-              <input type="text" id="search-input" placeholder="Buscar..." class="filter-input search" />
-              <button id="filter-toggle" class="btn-filter">⚙️</button>
-              <div class="filter-dropdown">
-                <button class="filter-btn" data-type="all">Todas</button>
-                <button class="filter-btn" data-type="entrada">Entradas</button>
-                <button class="filter-btn" data-type="saida">Saídas</button>
-                <hr />
-                <button class="filter-btn" data-special="recorrentes">Recorrentes</button>
+      <!-- ────────────────────────── MAIN ─────────────────────────── -->
+      <div class="main">
+        <header class="topbar">
+          <button
+            class="icon-btn topbar__menu"
+            type="button"
+            id="menu-btn"
+            aria-label="Abrir menu"
+            aria-expanded="false"
+            aria-controls="sidebar"
+          >
+            ☰
+          </button>
+
+          <h1 class="topbar__title" id="view-title">Dashboard</h1>
+
+          <div class="topbar__actions">
+            <div class="month-picker">
+              <button class="icon-btn" type="button" id="month-prev" aria-label="Mês anterior">‹</button>
+              <label class="sr-only" for="month-input">Mês de referência</label>
+              <input class="month-picker__input" type="month" id="month-input" />
+              <button class="icon-btn" type="button" id="month-next" aria-label="Próximo mês">›</button>
+            </div>
+
+            <button class="icon-btn" type="button" id="theme-btn" aria-label="Alternar tema" title="Alternar tema (Ctrl/⌘ + J)">
+              <span aria-hidden="true">◐</span>
+            </button>
+
+            <button class="btn btn--primary" type="button" id="new-tx-btn" title="Nova transação (N)">
+              <span aria-hidden="true">+</span>
+              <span class="btn__label">Nova transação</span>
+            </button>
+          </div>
+        </header>
+
+        <main class="content" id="conteudo" tabindex="-1">
+          <!-- ───────────────── DASHBOARD ───────────────── -->
+          <section class="view is-active" data-view="dashboard" aria-labelledby="view-title">
+            <div class="stat-grid" id="stat-grid"></div>
+            <div class="insight-grid" id="insight-grid"></div>
+
+            <div class="split">
+              <section class="card">
+                <header class="card__header">
+                  <h2 class="card__title">Gastos por categoria</h2>
+                  <p class="card__subtitle" id="donut-subtitle"></p>
+                </header>
+                <div class="chart chart--donut">
+                  <canvas id="category-chart" role="img" aria-label="Gráfico de gastos por categoria"></canvas>
+                </div>
+                <ul class="legend" id="category-legend"></ul>
+              </section>
+
+              <section class="card">
+                <header class="card__header">
+                  <h2 class="card__title">Últimas transações</h2>
+                  <a class="card__link" href="#/transacoes">Ver todas</a>
+                </header>
+                <ul class="mini-list" id="recent-list"></ul>
+              </section>
+            </div>
+          </section>
+
+          <!-- ──────────────── TRANSAÇÕES ──────────────── -->
+          <section class="view" data-view="transacoes" hidden>
+            <section class="card">
+              <header class="card__header card__header--wrap">
+                <h2 class="card__title">Transações</h2>
+                <div class="toolbar">
+                  <div class="search">
+                    <label class="sr-only" for="search-input">Buscar transações</label>
+                    <input
+                      class="search__input"
+                      type="search"
+                      id="search-input"
+                      placeholder="Buscar por descrição ou categoria…"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div class="segmented" role="group" aria-label="Filtrar por tipo">
+                    <button class="segmented__btn is-active" type="button" data-filter-type="all">Todas</button>
+                    <button class="segmented__btn" type="button" data-filter-type="income">Entradas</button>
+                    <button class="segmented__btn" type="button" data-filter-type="expense">Saídas</button>
+                  </div>
+                  <label class="checkbox checkbox--inline">
+                    <input type="checkbox" id="recurring-filter" />
+                    <span>Só recorrentes</span>
+                  </label>
+                  <button class="btn btn--ghost" type="button" id="export-csv-btn">Exportar CSV</button>
+                </div>
+              </header>
+
+              <p class="result-count" id="result-count" aria-live="polite"></p>
+
+              <div class="table-wrap">
+                <table class="table">
+                  <caption class="sr-only">Lista de transações do mês selecionado</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col"><button class="table__sort" type="button" data-sort="date">Data</button></th>
+                      <th scope="col">Descrição</th>
+                      <th scope="col">Categoria</th>
+                      <th scope="col" class="num"><button class="table__sort" type="button" data-sort="amount">Valor</button></th>
+                      <th scope="col"><span class="sr-only">Ações</span></th>
+                    </tr>
+                  </thead>
+                  <tbody id="tx-tbody"></tbody>
+                </table>
               </div>
-            </div>
-          </div>
 
-          <div id="empty-state" class="empty-state">
-            <p>📭</p>
-            <p>Nenhuma transação registrada</p>
-          </div>
+              <div class="empty" id="tx-empty" hidden></div>
+            </section>
+          </section>
 
-          <div class="transactions-table">
-            <div class="table-header">
-              <div class="col-date">Data</div>
-              <div class="col-desc">Descrição</div>
-              <div class="col-category">Categoria</div>
-              <div class="col-value">Valor</div>
-              <div class="col-actions">Ações</div>
-            </div>
-            <ul class="transaction-list"></ul>
-          </div>
-        </section>
-      </div>
+          <!-- ──────────────── ORÇAMENTOS ──────────────── -->
+          <section class="view" data-view="orcamentos" hidden>
+            <section class="card">
+              <header class="card__header">
+                <h2 class="card__title">Orçamentos do mês</h2>
+                <p class="card__subtitle" id="budget-subtitle"></p>
+              </header>
 
-      <!-- TAB: ORÇAMENTOS -->
-      <div class="tab-content" data-tab="orcamento">
-        <section class="card">
-          <div class="section-header">
-            <h3>Orçamentos por Categoria</h3>
-          </div>
+              <form class="budget-form" id="budget-form">
+                <div class="field">
+                  <label class="field__label" for="budget-category">Categoria</label>
+                  <select class="field__input" id="budget-category" required></select>
+                </div>
+                <div class="field">
+                  <label class="field__label" for="budget-amount">Limite mensal</label>
+                  <input
+                    class="field__input"
+                    id="budget-amount"
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="1.000,00"
+                    autocomplete="off"
+                    required
+                  />
+                </div>
+                <button class="btn btn--primary" type="submit">Definir limite</button>
+              </form>
 
-          <div class="orcamentos-grid" id="orcamentos-grid"></div>
+              <div class="budget-grid" id="budget-grid"></div>
+            </section>
+          </section>
 
-          <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
-            <h4 style="margin-bottom: 16px;">Adicionar Orçamento</h4>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Categoria</label>
-                <select id="orcamento-categoria" class="form-input">
-                  <option value="">Selecionar</option>
-                  <option>Alimentação</option>
-                  <option>Transporte</option>
-                  <option>Moradia</option>
-                  <option>Saúde</option>
-                  <option>Lazer</option>
-                  <option>Educação</option>
-                  <option>Outros</option>
-                </select>
+          <!-- ──────────────── RELATÓRIOS ──────────────── -->
+          <section class="view" data-view="relatorios" hidden>
+            <section class="card">
+              <header class="card__header">
+                <h2 class="card__title">Entradas e saídas nos últimos 12 meses</h2>
+              </header>
+              <div class="chart chart--bars">
+                <canvas id="series-chart" role="img" aria-label="Gráfico de entradas e saídas por mês"></canvas>
               </div>
-              <div class="form-group">
-                <label>Limite (R$)</label>
-                <input type="text" id="orcamento-valor" class="form-input" placeholder="1000" />
+              <ul class="legend">
+                <li class="legend__item"><span class="legend__dot" style="background: var(--income)"></span> Entradas</li>
+                <li class="legend__item"><span class="legend__dot" style="background: var(--expense)"></span> Saídas</li>
+              </ul>
+            </section>
+
+            <section class="card">
+              <header class="card__header">
+                <h2 class="card__title">Comparar dois meses</h2>
+              </header>
+              <form class="compare-form" id="compare-form">
+                <div class="field">
+                  <label class="field__label" for="compare-a">Mês base</label>
+                  <input class="field__input" type="month" id="compare-a" required />
+                </div>
+                <div class="field">
+                  <label class="field__label" for="compare-b">Comparar com</label>
+                  <input class="field__input" type="month" id="compare-b" required />
+                </div>
+                <button class="btn btn--primary" type="submit">Comparar</button>
+              </form>
+              <div class="compare-result" id="compare-result"></div>
+            </section>
+
+            <section class="card">
+              <header class="card__header">
+                <h2 class="card__title">Resumo mês a mês</h2>
+              </header>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Mês</th>
+                      <th scope="col" class="num">Entradas</th>
+                      <th scope="col" class="num">Saídas</th>
+                      <th scope="col" class="num">Saldo</th>
+                    </tr>
+                  </thead>
+                  <tbody id="summary-tbody"></tbody>
+                </table>
               </div>
-              <div class="form-group" style="display: flex; align-items: flex-end;">
-                <button id="add-orcamento" class="btn btn-success">Adicionar</button>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          </section>
+        </main>
       </div>
+    </div>
 
-      <!-- TAB: RELATÓRIOS -->
-      <div class="tab-content" data-tab="relatorio">
-        <section class="card">
-          <div class="section-header">
-            <h3>Comparativo de Períodos</h3>
-          </div>
+    <div class="scrim" id="scrim" hidden></div>
 
-          <div class="form-row" style="margin-bottom: 24px;">
-            <div class="form-group">
-              <label>Mês 1</label>
-              <input type="month" id="periodo-1" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label>Mês 2</label>
-              <input type="month" id="periodo-2" class="form-input" />
-            </div>
-            <div class="form-group" style="display: flex; align-items: flex-end;">
-              <button id="comparar-btn" class="btn btn-success">Comparar</button>
-            </div>
-          </div>
-
-          <div id="comparativo-resultado" class="comparativo-grid" style="display: none;"></div>
-        </section>
-
-        <section class="card" style="margin-top: 24px;">
-          <div class="section-header">
-            <h3>Resumo Anual</h3>
-          </div>
-          <div id="resumo-anual" class="resumo-anual"></div>
-        </section>
-      </div>
-    </main>
-  </div>
-
-  <script src="script.js"></script>
-</body>
+    <script type="module" src="src/main.js"></script>
+    <noscript>
+      <p style="padding: 24px">Este aplicativo precisa de JavaScript habilitado.</p>
+    </noscript>
+  </body>
 </html>
