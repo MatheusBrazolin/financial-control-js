@@ -1,18 +1,25 @@
 import { el, $, render } from "../dom.js";
+import { icon } from "../icons.js";
 import { formatMoney } from "../../domain/money.js";
 import { monthLabel } from "../../domain/dates.js";
 import { budgetStatus } from "../../domain/stats.js";
+import { budgetsFor } from "../../domain/budgets.js";
 import { EXPENSE_CATEGORIES, colorOf } from "../../domain/transactions.js";
 
+/* Textos curtos: o cartão é estreito e a frase longa quebrava em duas
+   linhas desalinhadas entre um orçamento e outro. */
 const STATUS_TEXT = {
-  ok: "dentro do limite",
-  warning: "perto do limite",
-  over: "limite estourado",
+  ok: "restam",
+  warning: "restam só",
+  over: "estourou em",
 };
 
 export function renderBudgets(state, handlers) {
-  const list = budgetStatus(state.transactions, state.budgets, state.month);
-  $("#budget-subtitle").textContent = monthLabel(state.month);
+  const limits = budgetsFor(state.budgets, state.month);
+  const list = budgetStatus(state.transactions, limits, state.month);
+  $("#budget-subtitle").textContent = `${monthLabel(
+    state.month
+  )} — o limite vale deste mês em diante`;
 
   // Orçamento é teto de gasto, então só categorias de saída entram aqui.
   // As que já têm limite continuam na lista: escolhê-las sobrescreve o valor.
@@ -23,7 +30,7 @@ export function renderBudgets(state, handlers) {
     ...EXPENSE_CATEGORIES.map((c) =>
       el("option", {
         value: c,
-        text: c in state.budgets ? `${c} (alterar)` : c,
+        text: c in limits ? `${c} (alterar)` : c,
       })
     ),
   ]);
@@ -32,7 +39,7 @@ export function renderBudgets(state, handlers) {
   if (!list.length) {
     render($("#budget-grid"), [
       el("div", { class: "empty" }, [
-        el("p", { class: "empty__icon", "aria-hidden": "true", text: "🎯" }),
+        el("p", { class: "empty__icon", "aria-hidden": "true" }, [icon("target", { size: 30 })]),
         el("p", { class: "empty__title", text: "Nenhum orçamento definido" }),
         el("p", {
           class: "empty__text",
@@ -61,9 +68,8 @@ export function renderBudgets(state, handlers) {
             type: "button",
             "aria-label": `Remover orçamento de ${item.category}`,
             title: "Remover orçamento",
-            text: "×",
             onClick: () => handlers.onRemove(item.category),
-          }),
+          }, [icon("x", { size: 15 })]),
         ]),
 
         el("div", {
@@ -88,10 +94,9 @@ export function renderBudgets(state, handlers) {
         el("p", { class: "budget__status" }, [
           el("span", { class: "budget__percent", text: `${percent}%` }),
           el("span", {
-            text:
-              item.remaining >= 0
-                ? `${STATUS_TEXT[item.status]} · restam ${formatMoney(item.remaining)}`
-                : `${STATUS_TEXT[item.status]} · ${formatMoney(-item.remaining)} acima`,
+            text: `${STATUS_TEXT[item.status]} ${formatMoney(
+              Math.abs(item.remaining)
+            )}`,
           }),
         ]),
 

@@ -3,17 +3,25 @@
  * e notificação dos assinantes. A UI nunca escreve no localStorage direto.
  */
 
+import { migrate, expandRecurring, newId } from "../domain/transactions.js";
 import {
-  migrate,
-  expandRecurring,
-  newId,
-  CATEGORIES,
-} from "../domain/transactions.js";
+  normalizeBudgets,
+  budgetsFor,
+  setBudget as setBudgetIn,
+  removeBudget as removeBudgetIn,
+} from "../domain/budgets.js";
+import {
+  normalizeGoals,
+  validateGoal,
+  addContribution,
+  removeContribution,
+} from "../domain/goals.js";
 import { currentMonth } from "../domain/dates.js";
 
 const KEYS = {
   transactions: "fc:transactions",
   budgets: "fc:budgets",
+  goals: "fc:goals",
   theme: "fc:theme",
   legacyTransactions: "transacoes",
   legacyBudgets: "orcamentos",
@@ -54,15 +62,11 @@ function loadBudgets() {
     current && typeof current === "object"
       ? current
       : readJson(KEYS.legacyBudgets, {});
-  const out = {};
-  for (const [category, value] of Object.entries(source || {})) {
-    if (!CATEGORIES.includes(category)) continue;
-    const number = Number(value);
-    if (!Number.isFinite(number) || number <= 0) continue;
-    // O formato antigo guardava reais; o novo, centavos.
-    out[category] = Number.isInteger(value) && value > 10000 ? value : Math.round(number * 100);
-  }
-  return out;
+  return normalizeBudgets(source);
+}
+
+function loadGoals() {
+  return normalizeGoals(readJson(KEYS.goals, []));
 }
 
 const listeners = new Set();
@@ -70,10 +74,20 @@ const listeners = new Set();
 const state = {
   transactions: [],
   budgets: {},
+  goals: [],
   month: currentMonth(),
-  filters: { type: "all", query: "", category: "all", onlyRecurring: false },
+  filters: {
+    type: "all",
+    query: "",
+    category: "all",
+    onlyRecurring: false,
+    allMonths: false,
+  },
   persistent: true,
 };
+
+/** Avisado pelo app quando a gravação passa a falhar no meio do uso. */
+let onPersistFailure = () => {};
 
 let lastDeleted = null;
 
@@ -84,8 +98,14 @@ function emit() {
 function persist() {
   const ok =
     writeJson(KEYS.transactions, state.transactions) &&
-    writeJson(KEYS.budgets, state.budgets);
+    writeJson(KEYS.budgets, state.budgets) &&
+    writeJson(KEYS.goals, state.goals);
+
+  // Só avisa na transição: perder a gravação no meio do uso é o caso
+  // perigoso, porque o usuário segue lançando achando que está salvo.
+  const justBroke = state.persistent && !ok;
   state.persistent = ok;
+  if (justBroke) onPersistFailure();
   return ok;
 }
 
@@ -117,6 +137,7 @@ export const store = {
   init() {
     state.transactions = loadTransactions();
     state.budgets = loadBudgets();
+    state.goals = loadGoals();
     const generated = applyRecurring();
     emit();
     return generated;
@@ -133,7 +154,13 @@ export const store = {
   },
 
   clearFilters() {
-    state.filters = { type: "all", query: "", category: "all", onlyRecurring: false };
+    state.filters = {
+      type: "all",
+      query: "",
+      category: "all",
+      onlyRecurring: false,
+      allMonths: false,
+    };
     emit();
   },
 
@@ -214,28 +241,87 @@ export const store = {
     return true;
   },
 
-  setBudget(category, limitCents) {
-    state.budgets[category] = limitCents;
+  /** Limites que valem no mês aberto, já resolvendo a herança. */
+  budgetsOfMonth(month = state.month) {
+    return budgetsFor(state.budgets, month);
+  },
+
+  setBudget(category, limitCents, month = state.month) {
+    state.budgets = setBudgetIn(state.budgets, month, category, limitCents);
     persist();
     emit();
   },
 
-  removeBudget(category) {
-    delete state.budgets[category];
+  removeBudget(category, month = state.month) {
+    state.budgets = removeBudgetIn(state.budgets, month, category);
     persist();
     emit();
+  },
+
+  // ── metas ──────────────────────────────────────────────────────
+  addGoal(data) {
+    const { valid } = validateGoal(data);
+    if (!valid) return null;
+    const goal = {
+      id: newId(),
+      name: data.name.trim(),
+      target: data.target,
+      deadline: data.deadline || null,
+      contributions: [],
+      createdAt: new Date().toISOString(),
+    };
+    state.goals.push(goal);
+    persist();
+    emit();
+    return goal;
+  },
+
+  updateGoal(id, patch) {
+    const index = state.goals.findIndex((g) => g.id === id);
+    if (index === -1) return null;
+    state.goals[index] = { ...state.goals[index], ...patch, id };
+    persist();
+    emit();
+    return state.goals[index];
+  },
+
+  removeGoal(id) {
+    const goal = state.goals.find((g) => g.id === id);
+    if (!goal) return null;
+    state.goals = state.goals.filter((g) => g.id !== id);
+    persist();
+    emit();
+    return goal;
+  },
+
+  addContribution(goalId, contribution) {
+    const index = state.goals.findIndex((g) => g.id === goalId);
+    if (index === -1) return null;
+    state.goals[index] = addContribution(state.goals[index], contribution);
+    persist();
+    emit();
+    return state.goals[index];
+  },
+
+  removeContribution(goalId, contributionId) {
+    const index = state.goals.findIndex((g) => g.id === goalId);
+    if (index === -1) return null;
+    state.goals[index] = removeContribution(state.goals[index], contributionId);
+    persist();
+    emit();
+    return state.goals[index];
+  },
+
+  /** O app registra aqui o aviso de "não estou mais conseguindo salvar". */
+  onPersistFailure(handler) {
+    onPersistFailure = handler;
   },
 
   /** @returns {number} quantas transações entraram */
-  replaceAll({ transactions, budgets }) {
+  replaceAll({ transactions, budgets, goals }) {
     state.transactions = transactions.map(migrate).filter(Boolean);
-    state.budgets = {};
-    for (const [category, value] of Object.entries(budgets || {})) {
-      const number = Number(value);
-      if (CATEGORIES.includes(category) && Number.isFinite(number) && number > 0) {
-        state.budgets[category] = Math.round(number);
-      }
-    }
+    state.budgets = normalizeBudgets(budgets);
+    state.goals = normalizeGoals(goals);
     persist();
     applyRecurring();
     emit();
@@ -245,6 +331,7 @@ export const store = {
   clearAll() {
     state.transactions = [];
     state.budgets = {};
+    state.goals = [];
     persist();
     emit();
   },

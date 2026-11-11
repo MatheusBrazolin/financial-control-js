@@ -1,6 +1,7 @@
 /** Toasts e diálogos — substituem `alert()` e `confirm()` do navegador. */
 
 import { el } from "./dom.js";
+import { icon } from "./icons.js";
 
 const container = el("div", {
   class: "toast-stack",
@@ -32,9 +33,8 @@ export function toast(message, options = {}) {
       class: "toast__close",
       type: "button",
       "aria-label": "Fechar aviso",
-      text: "×",
       onClick: () => dismiss(),
-    }),
+    }, [icon("x", { size: 15 })]),
   ]);
 
   let timer = setTimeout(dismiss, duration);
@@ -102,5 +102,105 @@ export function confirmDialog({
 
     document.body.append(dialog);
     dialog.showModal();
+  });
+}
+
+/**
+ * Diálogo com campos, para perguntas curtas (um aporte, por exemplo).
+ * `fields` é [{ name, label, type, value, placeholder, inputMode }].
+ * `validate` recebe os valores e devolve { valid, errors }.
+ *
+ * @returns {Promise<object|null>} valores preenchidos, ou null se cancelou
+ */
+export function promptDialog({ title, message, fields, confirmLabel = "Salvar", validate }) {
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const inputs = new Map();
+    const errors = new Map();
+
+    const body = fields.map((field) => {
+      const id = `prompt-${field.name}`;
+      const input = el("input", {
+        class: "field__input",
+        id,
+        type: field.type || "text",
+        value: field.value ?? "",
+        placeholder: field.placeholder ?? "",
+        inputMode: field.inputMode,
+        autocomplete: "off",
+      });
+      const error = el("p", { class: "field__error", role: "alert" });
+      inputs.set(field.name, input);
+      errors.set(field.name, error);
+
+      return el("div", { class: "field" }, [
+        el("label", { class: "field__label", htmlFor: id, text: field.label }),
+        input,
+        error,
+      ]);
+    });
+
+    const form = el("form", { class: "tx-form", noValidate: true }, [
+      message && el("p", { class: "dialog__message", text: message }),
+      ...body,
+      el("div", { class: "dialog__actions" }, [
+        el("button", {
+          type: "button",
+          class: "btn btn--ghost",
+          text: "Cancelar",
+          onClick: () => finish(null),
+        }),
+        el("button", { type: "submit", class: "btn btn--primary", text: confirmLabel }),
+      ]),
+    ]);
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const values = Object.fromEntries(
+        [...inputs].map(([name, input]) => [name, input.value])
+      );
+
+      const result = validate ? validate(values) : { valid: true, errors: {} };
+      for (const [name, error] of errors) {
+        const message = result.errors?.[name] || "";
+        error.textContent = message;
+        inputs.get(name).classList.toggle("field__input--invalid", Boolean(message));
+      }
+      if (!result.valid) return;
+      finish(result.values ?? values);
+    });
+
+    const dialog = el("dialog", { class: "dialog dialog--form" }, [
+      el("div", { class: "dialog__body" }, [
+        el("div", { class: "dialog__header" }, [
+          el("h2", { class: "dialog__title", text: title }),
+          el("button", {
+            type: "button",
+            class: "icon-btn",
+            "aria-label": "Fechar",
+            onClick: () => finish(null),
+          }, [icon("x", { size: 17 })]),
+        ]),
+        form,
+      ]),
+    ]);
+
+    function finish(value) {
+      if (settled) return;
+      settled = true;
+      dialog.close();
+      dialog.remove();
+      resolve(value);
+    }
+
+    dialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      finish(null);
+    });
+
+    document.body.append(dialog);
+    dialog.showModal();
+    inputs.values().next().value?.focus();
   });
 }

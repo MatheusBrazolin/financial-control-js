@@ -7,9 +7,10 @@
  */
 
 import { el, $, $$, render } from "./dom.js";
+import { icon } from "./icons.js";
 import { parseAmount, formatMoney } from "../domain/money.js";
 import { todayISO } from "../domain/dates.js";
-import { categoriesFor, validate } from "../domain/transactions.js";
+import { categoriesFor, validate, parseTags } from "../domain/transactions.js";
 
 let dialog = null;
 let resolver = null;
@@ -71,6 +72,27 @@ function build() {
         required: true,
       })),
 
+      field("tx-tags", "Etiquetas (opcional)", el("input", {
+        class: "field__input",
+        id: "tx-tags",
+        name: "tags",
+        type: "text",
+        autocomplete: "off",
+        placeholder: "casa, viagem — separe por vírgula",
+        list: "tx-tag-options",
+      })),
+
+      el("datalist", { id: "tx-tag-options" }),
+
+      field("tx-note", "Observação (opcional)", el("textarea", {
+        class: "field__input field__input--area",
+        id: "tx-note",
+        name: "note",
+        rows: 2,
+        maxLength: 280,
+        placeholder: "Um detalhe para lembrar depois",
+      })),
+
       el("label", { class: "checkbox" }, [
         el("input", {
           type: "checkbox",
@@ -123,9 +145,8 @@ function build() {
           type: "button",
           class: "icon-btn",
           "aria-label": "Fechar",
-          text: "×",
           onClick: () => close(null),
-        }),
+        }, [icon("x", { size: 17 })]),
       ]),
       form,
     ]),
@@ -195,6 +216,7 @@ const FIELDS = [
   ["tx-amount", "amount"],
   ["tx-category", "category"],
   ["tx-date", "date"],
+  ["tx-note", "note"],
   ["tx-until", "recurringUntil"],
 ];
 
@@ -220,6 +242,8 @@ function onSubmit(event) {
     category: $("#tx-category").value,
     date: $("#tx-date").value,
     type: currentType(),
+    tags: parseTags($("#tx-tags").value),
+    note: $("#tx-note").value.trim(),
     recurring: $("#tx-recurring").checked,
     recurringUntil: $("#tx-until").value || null,
   };
@@ -244,8 +268,13 @@ function close(result) {
  * @param {object|null} transaction  transação para editar, ou null para criar
  * @returns {Promise<object|null>} dados validados, ou null se cancelou
  */
-export function openTransactionForm(transaction = null) {
+export function openTransactionForm(transaction = null, { tagSuggestions = [] } = {}) {
   if (!dialog) build();
+
+  render(
+    $("#tx-tag-options"),
+    tagSuggestions.map((tag) => el("option", { value: tag }))
+  );
 
   const editing = Boolean(transaction);
   $("#tx-title").textContent = editing ? "Editar transação" : "Nova transação";
@@ -254,6 +283,8 @@ export function openTransactionForm(transaction = null) {
   $("#tx-description").value = transaction?.description ?? "";
   $("#tx-amount").value = transaction ? formatMoney(transaction.amount) : "";
   $("#tx-date").value = transaction?.date ?? todayISO();
+  $("#tx-tags").value = (transaction?.tags ?? []).join(", ");
+  $("#tx-note").value = transaction?.note ?? "";
   $("#tx-recurring").checked = transaction?.recurring ?? false;
   for (const radio of $$('input[name="type"]')) {
     radio.checked = radio.value === (transaction?.type ?? "expense");

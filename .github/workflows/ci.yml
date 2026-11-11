@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Testes
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # O projeto não tem dependências: não há npm ci a rodar.
+      - name: Rodar os testes
+        run: npm test
+
+      - name: Conferir a sintaxe de todos os módulos
+        run: |
+          find src scripts sw.js -name '*.js' -o -name '*.mjs' \
+            | xargs -n1 node --check
+
+      - name: Conferir que os ícones no repositório estão atualizados
+        run: |
+          npm run icons
+          # Compara o hash da ARTE, não os PNGs: o zlib comprime diferente
+          # entre sistemas, então o mesmo desenho gera bytes diferentes no
+          # macOS e aqui. O lock depende só da definição da arte.
+          git diff --exit-code -- assets/icons.lock \
+            || (echo "::error::O desenho dos ícones mudou — rode 'npm run icons' e faça commit." && exit 1)

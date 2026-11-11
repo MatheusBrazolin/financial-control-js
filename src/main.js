@@ -5,18 +5,22 @@
 
 import { store } from "./core/store.js";
 import { $, $$ } from "./ui/dom.js";
-import { toast, confirmDialog } from "./ui/feedback.js";
+import { toast, confirmDialog, promptDialog } from "./ui/feedback.js";
 import { openTransactionForm } from "./ui/transaction-form.js";
 import { autoRedraw } from "./ui/charts.js";
+import { hydrateIcons } from "./ui/icons.js";
 import { renderDashboard } from "./ui/views/dashboard.js";
 import {
   renderTransactions,
   renderCategoryFilter,
+  renderTagFilter,
   visibleTransactions,
   setSort,
 } from "./ui/views/transactions.js";
-import { duplicate } from "./domain/transactions.js";
+import { renderGoals } from "./ui/views/goals.js";
+import { duplicate, allTags } from "./domain/transactions.js";
 import { todayISO } from "./domain/dates.js";
+import { validateGoal } from "./domain/goals.js";
 import { renderBudgets } from "./ui/views/budgets.js";
 import { renderReports, renderComparison } from "./ui/views/reports.js";
 import { parseAmount, formatMoney } from "./domain/money.js";
@@ -27,6 +31,7 @@ const VIEWS = {
   dashboard: "Dashboard",
   transacoes: "Transações",
   orcamentos: "Orçamentos",
+  metas: "Metas",
   relatorios: "Relatórios",
 };
 
@@ -83,6 +88,7 @@ function renderActiveView() {
       break;
     case "transacoes":
       renderCategoryFilter(state);
+      renderTagFilter(state);
       renderTransactions(state, {
         onCreate: createTransaction,
         onEdit: editTransaction,
@@ -90,12 +96,20 @@ function renderActiveView() {
         onDuplicate: duplicateTransaction,
         onStopRecurrence: stopRecurrence,
         onClearFilters: clearFilters,
+        onTagClick: filterByTag,
       });
       break;
     case "orcamentos":
       renderBudgets(state, {
         onRemove: removeBudget,
         onEdit: editBudget,
+      });
+      break;
+    case "metas":
+      renderGoals(state, {
+        onRemove: removeGoal,
+        onContribute: addContribution,
+        onRemoveContribution: removeContribution,
       });
       break;
     case "relatorios":
@@ -115,7 +129,7 @@ function recurrenceNote(generated) {
 }
 
 async function createTransaction() {
-  const data = await openTransactionForm();
+  const data = await openTransactionForm(null, { tagSuggestions: tagNames() });
   if (!data) return;
   const { generated } = store.addTransaction(data);
   store.setMonth(data.date.slice(0, 7));
@@ -123,7 +137,7 @@ async function createTransaction() {
 }
 
 async function editTransaction(transaction) {
-  const data = await openTransactionForm(transaction);
+  const data = await openTransactionForm(transaction, { tagSuggestions: tagNames() });
   if (!data) return;
   const { generated } = store.updateTransaction(transaction.id, data);
   toast(`Transação atualizada.${recurrenceNote(generated)}`, { type: "success" });
@@ -163,10 +177,108 @@ async function stopRecurrence(template) {
   );
 }
 
+/** Clicar numa etiqueta na tabela filtra por ela, em todos os meses. */
+function filterByTag(tag) {
+  store.setFilters({ tag, allMonths: true });
+  $("#all-months-filter").checked = true;
+  toast(`Filtrando por #${tag} em todos os meses.`, { duration: 3500 });
+}
+
+function tagNames() {
+  return allTags(store.state.transactions).map((t) => t.tag);
+}
+
+// ─────────────────────────── metas ───────────────────────────────
+async function createGoal() {
+  const values = await promptDialog({
+    title: "Nova meta",
+    message: "O app calcula sozinho quanto falta guardar por mês até o prazo.",
+    confirmLabel: "Criar meta",
+    fields: [
+      { name: "name", label: "Meta", placeholder: "Reserva de emergência" },
+      {
+        name: "target",
+        label: "Quanto juntar",
+        inputMode: "decimal",
+        placeholder: "10.000,00",
+      },
+      { name: "deadline", label: "Até (opcional)", type: "month" },
+    ],
+    validate: ({ name, target, deadline }) => {
+      const data = {
+        name,
+        target: parseAmount(target),
+        deadline: deadline || null,
+      };
+      const { valid, errors } = validateGoal(data);
+      return { valid, errors, values: data };
+    },
+  });
+  if (!values) return;
+
+  store.addGoal(values);
+  toast(`Meta "${values.name.trim()}" criada.`, { type: "success" });
+}
+
+async function removeGoal(goal) {
+  const ok = await confirmDialog({
+    title: "Excluir meta?",
+    message: `"${goal.name}" e os ${goal.contributions.length} aportes registrados nela serão removidos.`,
+    confirmLabel: "Excluir",
+    danger: true,
+  });
+  if (!ok) return;
+  store.removeGoal(goal.id);
+  toast("Meta excluída.", { type: "info" });
+}
+
+async function addContribution(goal) {
+  const values = await promptDialog({
+    title: "Registrar aporte",
+    message: `Quanto você guardou para "${goal.name}"?`,
+    confirmLabel: "Registrar",
+    fields: [
+      { name: "amount", label: "Valor", inputMode: "decimal", placeholder: "500,00" },
+      { name: "date", label: "Data", type: "date", value: todayISO() },
+    ],
+    validate: ({ amount, date }) => {
+      const cents = parseAmount(amount);
+      const errors = {};
+      if (cents === null || cents <= 0) errors.amount = "Informe um valor maior que zero.";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) errors.date = "Data inválida.";
+      return {
+        valid: !Object.keys(errors).length,
+        errors,
+        values: { amount: cents, date },
+      };
+    },
+  });
+  if (!values) return;
+
+  store.addContribution(goal.id, values);
+  toast(`Aporte de ${formatMoney(values.amount)} registrado.`, { type: "success" });
+}
+
+async function removeContribution(goal, contribution) {
+  const ok = await confirmDialog({
+    title: "Remover aporte?",
+    message: `${formatMoney(contribution.amount)} em ${contribution.date
+      .split("-")
+      .reverse()
+      .join("/")}.`,
+    confirmLabel: "Remover",
+    danger: true,
+  });
+  if (!ok) return;
+  store.removeContribution(goal.id, contribution.id);
+  toast("Aporte removido.", { type: "info" });
+}
+
 function clearFilters() {
   store.clearFilters();
   $("#search-input").value = "";
   $("#recurring-filter").checked = false;
+  $("#all-months-filter").checked = false;
   for (const button of $$("[data-filter-type]")) {
     const all = button.dataset.filterType === "all";
     button.classList.toggle("is-active", all);
@@ -365,6 +477,16 @@ function bindEvents() {
     store.setFilters({ onlyRecurring: event.target.checked })
   );
 
+  $("#all-months-filter").addEventListener("change", (event) =>
+    store.setFilters({ allMonths: event.target.checked })
+  );
+
+  $("#tag-filter").addEventListener("change", (event) =>
+    store.setFilters({ tag: event.target.value })
+  );
+
+  $("#new-goal-btn").addEventListener("click", createGoal);
+
   for (const button of $$(".table__sort")) {
     button.addEventListener("click", () => {
       setSort(button.dataset.sort);
@@ -504,10 +626,18 @@ function start() {
   $("#compare-a").value = addMonths(now, -1);
   $("#compare-b").value = now;
 
+  hydrateIcons();
   bindEvents();
   registerServiceWorker();
   store.subscribe(renderActiveView);
   autoRedraw(renderActiveView);
+
+  store.onPersistFailure(() =>
+    toast(
+      "O navegador parou de salvar (armazenamento cheio ou bloqueado). Exporte um backup agora — o que você lançar daqui em diante pode se perder.",
+      { type: "error", duration: 60000 }
+    )
+  );
 
   const generated = store.init();
   showView(viewFromHash());

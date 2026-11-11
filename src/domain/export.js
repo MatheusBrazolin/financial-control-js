@@ -8,6 +8,8 @@ const COLUMNS = [
   ["Categoria", (t) => t.category],
   ["Tipo", (t) => (t.type === "income" ? "Entrada" : "Saída")],
   ["Valor", (t) => (t.amount / 100).toFixed(2).replace(".", ",")],
+  ["Etiquetas", (t) => (t.tags || []).join(", ")],
+  ["Observação", (t) => t.note || ""],
   ["Recorrente", (t) => (t.recurring || t.seriesId ? "Sim" : "Não")],
 ];
 
@@ -30,14 +32,15 @@ export function toCsv(transactions) {
 }
 
 /** Backup completo, pronto para ser relido por `parseBackup`. */
-export function toBackup({ transactions, budgets }) {
+export function toBackup({ transactions, budgets, goals }) {
   return JSON.stringify(
     {
       app: "financial-control-js",
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       transactions,
       budgets,
+      goals,
     },
     null,
     2
@@ -59,5 +62,6 @@ export function parseBackup(text) {
     transactions: data.transactions,
     budgets:
       data.budgets && typeof data.budgets === "object" ? data.budgets : {},
+    goals: Array.isArray(data.goals) ? data.goals : [],
   };
 }

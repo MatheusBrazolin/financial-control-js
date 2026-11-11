@@ -9,6 +9,8 @@
  *   type: "income" | "expense",
  *   category: string,
  *   date: "YYYY-MM-DD",
+ *   tags: string[],              // etiquetas livres, minúsculas
+ *   note: string,                // observação livre
  *   recurring: boolean,          // é o template de uma série mensal
  *   recurringUntil: string|null, // "YYYY-MM": último mês a gerar (null = sem fim)
  *   seriesId: string | null,     // id do template que gerou esta parcela
@@ -81,6 +83,7 @@ export function validate({
   category,
   date,
   type,
+  note,
   recurring,
   recurringUntil,
 }) {
@@ -97,6 +100,7 @@ export function validate({
   } else if (amount > 100_000_000_00) {
     errors.amount = "Valor acima do limite suportado.";
   }
+  if (note && String(note).length > 280) errors.note = "Observação muito longa.";
   if (!category) errors.category = "Escolha uma categoria.";
   else if (!CATEGORIES.includes(category)) errors.category = "Categoria desconhecida.";
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) errors.date = "Data inválida.";
@@ -128,6 +132,8 @@ export function migrate(raw) {
       type: raw.type === "income" ? "income" : "expense",
       category: CATEGORIES.includes(raw.category) ? raw.category : "Outros",
       date: raw.date,
+      tags: parseTags(raw.tags),
+      note: String(raw.note ?? "").slice(0, 280),
       recurring: Boolean(raw.recurring),
       recurringUntil: /^\d{4}-\d{2}$/.test(raw.recurringUntil ?? "")
         ? raw.recurringUntil
@@ -154,6 +160,8 @@ export function migrate(raw) {
     type: raw.tipo === "entrada" ? "income" : "expense",
     category: CATEGORIES.includes(raw.categoria) ? raw.categoria : "Outros",
     date,
+    tags: [],
+    note: "",
     recurring: Boolean(raw.recorrente),
     recurringUntil: null,
     seriesId: null,
@@ -206,19 +214,59 @@ export function expandRecurring(transactions, upTo = currentMonth()) {
   return created;
 }
 
-/** Aplica busca textual, tipo, mês, categoria e filtro de recorrência. */
+/**
+ * Normaliza etiquetas digitadas: "Casa, viagem ,CASA" → ["casa", "viagem"].
+ * Minúsculas para "Casa" e "casa" não virarem duas etiquetas diferentes.
+ */
+export function parseTags(input) {
+  if (Array.isArray(input)) input = input.join(",");
+  return [
+    ...new Set(
+      String(input ?? "")
+        .split(/[,;]/)
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean)
+        .map((tag) => tag.slice(0, 24))
+    ),
+  ].slice(0, 8);
+}
+
+/** Todas as etiquetas em uso, da mais frequente para a menos. */
+export function allTags(transactions) {
+  const counts = new Map();
+  for (const t of transactions) {
+    for (const tag of t.tags || []) {
+      counts.set(tag, (counts.get(tag) || 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"))
+    .map(([tag, count]) => ({ tag, count }));
+}
+
+/** Aplica busca textual, tipo, mês, categoria, etiqueta e recorrência. */
 export function filterTransactions(
   transactions,
-  { month, type, query, category, onlyRecurring } = {}
+  { month, type, query, category, tag, onlyRecurring } = {}
 ) {
   const needle = (query || "").trim().toLowerCase();
   return transactions.filter((t) => {
     if (month && monthOf(t.date) !== month) return false;
     if (type && type !== "all" && t.type !== type) return false;
     if (category && category !== "all" && t.category !== category) return false;
+    if (tag && tag !== "all" && !(t.tags || []).includes(tag)) return false;
     if (onlyRecurring && !t.recurring && !t.seriesId) return false;
     if (needle) {
-      const haystack = `${t.description} ${t.category}`.toLowerCase();
+      // A busca cobre também etiquetas e observação — é onde costuma estar
+      // o detalhe que a pessoa lembra ("nota fiscal", "presente da Ana").
+      const haystack = [
+        t.description,
+        t.category,
+        t.note || "",
+        ...(t.tags || []),
+      ]
+        .join(" ")
+        .toLowerCase();
       if (!haystack.includes(needle)) return false;
     }
     return true;
