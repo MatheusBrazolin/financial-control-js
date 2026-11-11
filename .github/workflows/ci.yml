@@ -29,6 +29,8 @@ jobs:
       - name: Conferir que os ícones no repositório estão atualizados
         run: |
           npm run icons
-          # Só os PNGs gerados: o resto de assets/ é escrito à mão.
-          git diff --exit-code --stat -- 'assets/*.png' \
-            || (echo "::error::Os ícones estão fora de sincronia — rode 'npm run icons' e faça commit." && exit 1)
+          # Compara o hash da ARTE, não os PNGs: o zlib comprime diferente
+          # entre sistemas, então o mesmo desenho gera bytes diferentes no
+          # macOS e aqui. O lock depende só da definição da arte.
+          git diff --exit-code -- assets/icons.lock \
+            || (echo "::error::O desenho dos ícones mudou — rode 'npm run icons' e faça commit." && exit 1)

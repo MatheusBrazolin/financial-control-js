@@ -6,6 +6,7 @@
  */
 
 import { deflateSync } from "node:zlib";
+import { createHash } from "node:crypto";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -159,3 +160,26 @@ for (const [name, size, options] of TARGETS) {
   writeFileSync(file, encodePng(size, render(size, options)));
   console.log(`✓ ${name} (${size}×${size})`);
 }
+
+/**
+ * Impressão digital da ARTE, não dos arquivos.
+ *
+ * Os PNGs não são reproduzíveis byte a byte: o zlib comprime diferente
+ * entre versões e sistemas, então o mesmo desenho gera arquivos de
+ * tamanhos levemente diferentes no macOS e no Linux do CI. Comparar
+ * bytes nunca passaria.
+ *
+ * Este hash depende só da definição da arte, então responde exatamente
+ * à pergunta que interessa: alguém mexeu no desenho e esqueceu de
+ * rodar `npm run icons`?
+ */
+const fingerprint = createHash("sha256")
+  .update(JSON.stringify({ ART, TARGETS }))
+  .digest("hex");
+
+writeFileSync(
+  join(OUT, "icons.lock"),
+  `${fingerprint}\n` +
+    "# Hash da arte em scripts/build-icons.mjs. Gerado por 'npm run icons'.\n"
+);
+console.log(`✓ icons.lock (${fingerprint.slice(0, 12)}…)`);
